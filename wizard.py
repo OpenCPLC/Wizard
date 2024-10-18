@@ -75,7 +75,7 @@ controller_define = {
   "uno": "OPENCPLC_UNO",
   "dio": "OPENCPLC_DIO",
   "aio": "OPENCPLC_AIO",
-  "eco": "OPENCPLC_MIN"
+  "eco": "OPENCPLC_ECO"
 }
 
 if args.controller not in controller_define:
@@ -98,7 +98,7 @@ RAM = { "128kB": 36, "512kB": 144 }[args.memory]
 FREQ = 16000000 if args.controller in ["eco", "void"] else 18432000
 
 if args.controller == "void": FLASH -= 4
-elif args.controller == "min": FLASH -= 12
+elif args.controller == "eco": FLASH -= 12
 else: FLASH -= 20
 
 BASE_URL = "http://sqrt.pl"
@@ -177,12 +177,12 @@ if not os.path.exists(args.project):
 
 # Utworzenie pliku `main.c`, jeśli nie istnieje
 src = utils.files_list(args.project, ".c")
-if not any("main.c" in files for files in src.values()):
+if not any(os.path.basename(file) == "main.c" for files in src.values() for file in files):
   create_file("main.c", sf.main_c, args.project)
 
 # Utworzenie pliku `main.h`, jeśli nie istnieje
 head = utils.files_list(args.project, ".h")
-if not any("main.h" in files for files in head.values()):
+if not any(os.path.basename(file) == "main.h" for files in head.values() for file in files):
   create_file("main.h", sf.main_h, args.project, {
     "${DATE}": utils.get_date(),
     "${FREQ}": str(FREQ)
