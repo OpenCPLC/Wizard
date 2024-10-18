@@ -3,7 +3,7 @@
 **Wizard** jest aplikacją konsolową usprawniającą pracę z **OpenCPLC**, którego zadaniem jest dostosowanie środowiska pracy tak, aby 👨‍💻programista-automatyk mógł skupić się na tworzeniu aplikacji, a nie walce z konfiguracją ekosystemu i kompilacją programu. Podczas uruchomienia konieczne jest wybranie sterownika `-c --controller`, ustawienie nazwy projektu `-n --name` oraz jego lokalizacji `-p --project`.
 
 ```bash
-./wizard.exe -n <project name> -c {Uno/DIO/AIO} -p <path/to/project>
+./wizard.exe -n <project name> -c <controller> -p <path/to/project>
 ./wizard.exe -n blinky -c Uno -p projects/blinky
 ```
 
