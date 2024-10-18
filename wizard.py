@@ -54,7 +54,7 @@ def print_last_modification(dir:str="./"):
   print("•", date, f"{Color.GREY}{file}{Color.END}")
 
 if args.version:
-  print(f"Wizard OpenCPLC {Color.CYAN}1.0.0{Color.END}")
+  print(f"Wizard OpenCPLC {Color.CYAN}1.0.0{Color.END}-rc.1")
   # 1.0.0 - Workspace
   # 0.0.3 - Select controller
   # 0.0.2 - Last modification display
