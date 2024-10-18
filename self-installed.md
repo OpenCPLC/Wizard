@@ -2,9 +2,9 @@
 
 Do pracy ze sterownikami OpenCPLC wymagany jest zestaw bardziej specjalistycznych narzędzi, identyczny z tym używanym do pracy z mikrokontrolerami **STM32**. W skład tego zestawu wchodzą:
 
-- Klient [**GIT**](https://git-scm.com/downloads) - Klient [**GIT**](https://git-scm.com/downloads) - system kontroli wersji. Będzie potrzebny do pobrania najnowszych bibliotek, a także do zarządzania kodem. Jeśli jeszcze go nie używasz, warto zacząć.
-- Pakiet narzędzi [**GNU Arm Embedded Toolchain**](https://developer.arm.com/downloads/-/gnu-rm) - Obejmuje on między innymi kompilator. Pakiet trzeba pobrać i zainstalować w lokalizacji `C:\OpenCPLC\ArmGCC`
-- On-Chip Debugger - [**OpenOCD** ](https://gnutoolchains.com/arm-eabi/openocd/) Umożliwia komunikację z mikrokontrolerem za pomocą programatora ST-Link. Pakiet trzeba pobrać, rozpakować i umieścić w lokalizacji `C:\OpenCPLC\OpenOCD`
+- Klient [**GIT**](https://git-scm.com/downloads), czyli system kontroli wersji. Będzie potrzebny do pobrania najnowszych bibliotek OpenCPLC, ale jego możliwości sięgają znacznie dalej.
+- Pakiet narzędzi [**GNU Arm Embedded Toolchain**](https://developer.arm.com/downloads/-/gnu-rm), który obejmuje on między innymi kompilator. Pakiet trzeba pobrać i zainstalować w lokalizacji `C:\OpenCPLC\ArmGCC`
+- On-Chip Debugger, jakim jest [**OpenOCD** ](https://gnutoolchains.com/arm-eabi/openocd/). Umożliwia komunikację z mikrokontrolerem za pomocą programatora ST-Link. Pakiet trzeba pobrać, rozpakować i umieścić w lokalizacji `C:\OpenCPLC\OpenOCD`
 - Narzędzia do zarządzania procesem kompilacji programów, jakim jest [**Make**](https://www.gnu.org/software/make/).
 
 Aby zainstalować **Make**, można skorzystać z menedżera pakietów [**Chocolatey**](https://chocolatey.org/), który umożliwia prostą instalację wymaganych komponentów. Wystarczy otworzyć **PowerShell** jako 🛡️administrator i wywołać komendy:
