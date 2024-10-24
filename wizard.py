@@ -156,9 +156,9 @@ install_missing_add_path("OpenOCD", "openocd")
 install_missing_add_path("Make", "make")
 install_missing_add_path("Git", "git")
 
-# if reset_console:
-#   print(f"{WARN} Zresetuj konsolę systemową po zakończeniu pracy {Color.YELLOW}wizard.exe{Color.END}")
-#   print(f"{WARN} Spowoduje to załadowanie nowo dodanych ścieżek systemowych")
+if reset_console:
+  print(f"{WARN} Zresetuj konsolę systemową po zakończeniu pracy {Color.YELLOW}wizard.exe{Color.END}")
+  print(f"{WARN} Spowoduje to załadowanie nowo dodanych ścieżek systemowych")
 
 if not os.path.exists(args.framework):
   os.makedirs(args.framework)
@@ -195,10 +195,10 @@ utils.make_folder(INC)
 utils.make_folder(LIB)
 if args.controller != "void": utils.make_folder(PLC)
 
-if args.reset:
-  if os.path.exists("./makefile"):
-    os.remove("./makefile")
-    print(f"{WARN} Usunięto plik {Color.YELLOW}makefile{Color.END}")
+# if args.reset:
+#   if os.path.exists("./makefile"):
+#     os.remove("./makefile")
+#     print(f"{WARN} Usunięto plik {Color.YELLOW}makefile{Color.END}")
 
 new_makefile = False
 
