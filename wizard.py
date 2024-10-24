@@ -12,13 +12,12 @@ parser.add_argument("-f", "--framework", type=str, help="Lokalizacja framework'u
 parser.add_argument("-p", "--project", type=str, help="Lokalizacja aktywnego projektu (default: projects/{name})" , default="")
 parser.add_argument("-b", "--build", type=str, help="Lokalizacja dla skompilowanych plików framework'u i projektu (default: build)", default="build")
 parser.add_argument("-m", "--memory", type=str, help="Ilość pamięci FLASH w wykorzystywanej płytce {128kB|512kB}", default="")
-parser.add_argument("-r", "--reset", action="store_true", help="Pozwana na nadpisanie plików konfiguracyjnych", default=False)
+# parser.add_argument("-r", "--reset", action="store_true", help="Pozwana na nadpisanie plików konfiguracyjnych", default=False)
 parser.add_argument("-o", "--opt", type=str, help="Poziom optymalizacji kompilacji {O0, Og, O1, O2, O3} (default: Og)", default="Og")
 parser.add_argument("-v", "--version", action="store_true", help="Wersję programu 'wizard' oraz inne informacje", default=False)
 parser.add_argument("-hl", "--hash", nargs="+", type=str, help="[Hash] Lista tagów do za-hash'owania")
 parser.add_argument("-ht", "--title", type=str, help="[Hash] Tytół dla enum'a, który zostanie utworzony z listy hash'ów", default="")
 parser.add_argument("-hs", "--switch", action="store_true", help="[Hash] Czy wyświetlić gotowy kod switch-case do skopiowania?", default=False)
-# -g --gpt Model językowy
 args = parser.parse_args()
 
 class Color():
@@ -125,10 +124,10 @@ def install(name:str, yes:bool=False):
     print(f"{ERR} Błąd podczas instalacji {Color.BLUE}{name}{Color.END}: {e}")
     sys.exit()
 
-reset = False
+reset_console = False
 
-def install_missing_add_apth(name:str, cmd:str, var:str|None=None):
-  global reset
+def install_missing_add_path(name:str, cmd:str, var:str|None=None):
+  global reset_console
   if not utils.program_recognized(cmd):
     install(name)
     path = f"{BASE_PATH}\\{name}\\bin"
@@ -139,7 +138,7 @@ def install_missing_add_apth(name:str, cmd:str, var:str|None=None):
       else:
         print(f"{ERR} Błąd podczas dodawania ścieżki dla {Color.YELLOW}{cmd}{Color.END} do zmiennych środowiskowych")
         sys.exit()
-      reset = True
+      reset_console = True
 
 def create_file(name:str, content:str, path:str=".", replace_map:dict={}) -> str:
   file_name = f"{path}/{name}"
@@ -152,14 +151,14 @@ def create_file(name:str, content:str, path:str=".", replace_map:dict={}) -> str
     print(f"{OK} Utworzono plik {Color.CREAM}{name}{Color.END} {suffix}")
   return file_name
 
-install_missing_add_apth("ArmGCC", "arm-none-eabi-gcc", "ARMGCC")
-install_missing_add_apth("OpenOCD", "openocd")
-install_missing_add_apth("Make", "make")
-install_missing_add_apth("Git", "git")
+install_missing_add_path("ArmGCC", "arm-none-eabi-gcc", "ARMGCC")
+install_missing_add_path("OpenOCD", "openocd")
+install_missing_add_path("Make", "make")
+install_missing_add_path("Git", "git")
 
-if reset:
-  print(f"{WARN} Zresetuj konsolę systemową po zakończeniu pracy {Color.YELLOW}wizard.exe{Color.END}")
-  print(f"{WARN} Spowoduje to załadowanie nowo dodanych ścieżek systemowych")
+# if reset_console:
+#   print(f"{WARN} Zresetuj konsolę systemową po zakończeniu pracy {Color.YELLOW}wizard.exe{Color.END}")
+#   print(f"{WARN} Spowoduje to załadowanie nowo dodanych ścieżek systemowych")
 
 if not os.path.exists(args.framework):
   os.makedirs(args.framework)
