@@ -1,13 +1,15 @@
 ## 🔮 Wizard
 
-**Wizard** jest aplikacją konsolową usprawniającą pracę z **OpenCPLC**, którego zadaniem jest dostosowanie środowiska pracy tak, aby 👨‍💻programista-automatyk mógł skupić się na tworzeniu aplikacji, a nie walce z konfiguracją ekosystemu i kompilacją programu. Podczas uruchomienia konieczne jest wybranie sterownika `-c --controller`, ustawienie nazwy projektu `-n --name` oraz jego lokalizacji `-p --project`.
+**Wizard** jest aplikacją konsolową usprawniającą pracę z **OpenCPLC**, którego zadaniem jest dostosowanie środowiska pracy tak, aby 👨‍💻programista-automatyk mógł skupić się na tworzeniu aplikacji, a nie walce z konfiguracją ekosystemu i kompilacją programu. Pobierz **`wizard.exe`** z 🚀[Releases](https://github.com/OpenCPLC/Wizard/releases) i umieść go w wybranym folderze, który będzie pełnił rolę przestrzeni roboczej _(workspace)_. Następnie otwórz konsolę i wpisz:
 
 ```bash
-./wizard.exe -n <project_name> -c <controller> -p <path/to/project>
-./wizard.exe -n blinky -c Uno -p projects/blinky
+./wizard.exe -n <project_name> -c <controller>
+./wizard.exe -n blinky -c Uno
 ```
 
-Aplikację **`wizard.exe`** można pobrać z 🚀[Releases](https://github.com/OpenCPLC/Wizard/releases)
+Konsola systemowa jest dostępna w wielu aplikacjach, takich jak **Command Prompt**, **PowerShell**, [**GIT Bash**](https://git-scm.com/downloads), a nawet terminal w [**VSCode**](https://code.visualstudio.com/). Gdy wywołanie w konsoli zwróci błąd, prawdopodobnie nie została otwarta w przestrzeni roboczej i nie widzi aplikacji wizard.exe. Możesz zamknąć konsolę i otworzyć ją w odpowiednim folderze lub przejść ręcznie, używając komendy cd.
+
+### 🤔 How works?
 
 W pierwszej kolejności **Wizard** zainstaluje **GNU Arm Embedded Toolchain**, **OpenOCD**, **Make**, klienta **Git** oraz ustawi odpowiednio zmienne systemowe, jeżeli aplikacje nie są widoczne w systemie z poziomu konsoli. Jeżeli nie chcemy, aby ktoś grzebał w naszym systemie, możemy przygotować sobie [konfiguracje ręcznie](self-installed.md)
 
@@ -19,7 +21,7 @@ Najważniejszą funkcjonalnością 🪄**Wizard**'a jest przygotowanie pliku `ma
 
 Ostatnim zadaniem 🔮**Wizard**'a jest utworzenie plików konfiguracyjnych dla VSCode, które integrują IDE z zainstalowanymi programami oraz z projektem.
 
-## 🚩 Flags
+### 🚩 Flags
 
 Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mogą pozostać niezmienione, ale warto znać ich istnienie. Poniżej znajduje się lista wszystkich flag:
 
