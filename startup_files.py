@@ -126,17 +126,17 @@ SECTIONS
 
 makefile = """
 TARGET = ${NAME}
-
-DEBUG = 1
-
-OPT = -${OPT}
-
+FW = ${FRAMEWORK}
+PRO = ${PROJECT}
 BUILD = ${BUILD}
+OPT = ${OPT}
+FAMILY = ${FAMILY} 
+CTRL = ${CONTROLLER}
 
-C_SOURCES = \
+C_SOURCES = \\
 ${C_SOURCES}
 
-ASM_SOURCES = \
+ASM_SOURCES = \\
 ${ASM_SOURCES}
 
 PREFIX = arm-none-eabi-
@@ -157,24 +157,20 @@ BIN = $(CP) -O binary -S
  
 CPU = -mcpu=cortex-m0plus
 
-# MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
+# MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) # Floating point numbers
 MCU = $(CPU) -mthumb
-
-AS_DEFS = -D${FAMILY} -D${CONTROLLER}
-
-C_DEFS = -D${FAMILY} -D${CONTROLLER}
+AS_DEFS = -D$(FAMILY) -D$(CTRL)
+C_DEFS = -D$(FAMILY) -D$(CTRL)
 
 ASM_INCLUDES =
 
-C_INCLUDES = \
+C_INCLUDES = \\
 ${C_INCLUDES}
 
-ASFLAGS = $(MCU) $(AS_DEFS) $(ASM_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
-CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
-
-ifeq ($(DEBUG), 1)
-CFLAGS += -g -gdwarf-2
-endif
+ASFLAGS = $(MCU) $(AS_DEFS) $(ASM_INCLUDES) -$(OPT) -Wall -fdata-sections -ffunction-sections
+CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) -$(OPT) -Wall -fdata-sections -ffunction-sections
+CFLAGS += -g -gdwarf-2 # DEBUG
+CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
 CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
@@ -222,9 +218,9 @@ earse:
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "init; halt; stm32g0x mass_erase 0; reset; exit"
 
 clean:
-	cmd /c del /q $(BUILD)\\\\$(TARGET).* && \
-  if [ -d "$(BUILD)\\\\${FRAMEWORK}" ]; then cmd /c rmdir /s /q $(BUILD)\\\\${FRAMEWORK}; fi && \
-  if [ -d "$(BUILD)\\\\${PROJECT}" ]; then cmd /c rmdir /s /q $(BUILD)\\\\${PROJECT}; fi
+	cmd /c del /q $(BUILD)\\\\$(TARGET).* && \\
+	if [ -d "$(BUILD)\\\\$(FW)" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(FW); fi && \\
+	if [ -d "$(BUILD)\\\\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(PRO); fi
 
 clean_all:
 	if [ -d "$(BUILD)" ]; then cmd /c rmdir /s /q $(BUILD); fi

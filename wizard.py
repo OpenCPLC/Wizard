@@ -12,9 +12,9 @@ parser.add_argument("-f", "--framework", type=str, help="Lokalizacja framework'u
 parser.add_argument("-p", "--project", type=str, help="Lokalizacja aktywnego projektu (default: projects/{name})" , default="")
 parser.add_argument("-b", "--build", type=str, help="Lokalizacja dla skompilowanych plików framework'u i projektu (default: build)", default="build")
 parser.add_argument("-m", "--memory", type=str, help="Ilość pamięci FLASH w wykorzystywanej płytce {128kB|512kB}", default="")
-# parser.add_argument("-r", "--reset", action="store_true", help="Pozwana na nadpisanie plików konfiguracyjnych", default=False)
 parser.add_argument("-o", "--opt", type=str, help="Poziom optymalizacji kompilacji {O0, Og, O1, O2, O3} (default: Og)", default="Og")
 parser.add_argument("-v", "--version", action="store_true", help="Wersję programu 'wizard' oraz inne informacje", default=False)
+parser.add_argument("-i", "--info", action="store_true", help="Zwraca podstawowe informacje o bieżącym projekcie", default=False)
 parser.add_argument("-hl", "--hash", nargs="+", type=str, help="[Hash] Lista tagów do za-hash'owania")
 parser.add_argument("-ht", "--title", type=str, help="[Hash] Tytół dla enum'a, który zostanie utworzony z listy hash'ów", default="")
 parser.add_argument("-hs", "--switch", action="store_true", help="[Hash] Czy wyświetlić gotowy kod switch-case do skopiowania?", default=False)
@@ -26,6 +26,7 @@ class Color():
   RED = "\033[31m"
   YELLOW = "\033[33m"
   CYAN = "\033[36m"
+  TEAL = "\033[38;2;32;178;170m"
   MAGENTA = "\033[35m"
   GREY = "\033[90m"
   CREAM = "\033[38;5;216m"
@@ -45,28 +46,45 @@ if args.hash:
   print(c_code)
   sys.exit()
 
-def print_last_modification(dir:str="./"):
-  last_mod = utils.files_mdate_max(dir)
-  if not last_mod: return
-  file:str = last_mod[0].replace("\\", "/")
-  date = last_mod[1].strftime("%Y-%m-%d %H:%M:%S")
-  print("•", date, f"{Color.GREY}{file}{Color.END}")
+exit_flag = False
 
 if args.version:
-  print(f"Wizard OpenCPLC {Color.CYAN}1.0.0{Color.END}-rc.2")
-  # 1.0.0 - Workspace
-  # 0.0.3 - Select controller
-  # 0.0.2 - Last modification display
-  # 0.0.1 - Hash sub-application
-  # 0.0.0 - Project builder
-  print("Last modifications:")
-  print_last_modification(args.framework)
-  print_last_modification(args.project)
-  print_last_modification(args.build)
+  print(f"{Color.TEAL}Wizard{Color.END} OpenCPLC {Color.CYAN}1.0.0{Color.END}-rc.3")
   print(f"Repo: {Color.CREAM}https://github.com/OpenCPLC/Wizard{Color.END}")
-  sys.exit()
+  exit_flag = True
 
-args.controller = args.controller.lower()
+def get_last_modification(dir:str="./"):
+  last_mod = utils.files_mdate_max(dir)
+  if not last_mod: return
+  date = last_mod[1].strftime("%Y-%m-%d %H:%M:%S")
+  return date
+
+if args.info:
+  lines = utils.read_makefile_lines("makefile")
+  info = utils.get_vars(lines, ["TARGET", "FW", "PRO", "BUILD", "OPT", "CTRL"])
+  info["FW"] = info["FW"].replace("\\", "/")
+  info["PRO"] = info["PRO"].replace("\\", "/")
+  info["BUILD"] = info["BUILD"].replace("\\", "/")
+  ctrl_define = {
+    "STM32G0": "Void",
+    "OPENCPLC_CUSTOM": "Custom",
+    "OPENCPLC_UNO": f"OpenCPLC {Color.CYAN}Uno{Color.END}",
+    "OPENCPLC_DIO": f"OpenCPLC {Color.CYAN}DIO{Color.END}",
+    "OPENCPLC_AIO": f"OpenCPLC {Color.CYAN}AIO{Color.END}",
+    "OPENCPLC_ECO": f"OpenCPLC {Color.CYAN}Eco{Color.END}"
+  }
+  print(f"{Color.TEAL}OpenCPLC{Color.END} project information:")
+  print(f"• Name {Color.GREY}-n{Color.END}: {Color.CYAN}{info["TARGET"]}{Color.END}")
+  print(f"• Framework path {Color.GREY}-f{Color.END}: {Color.CREAM}{info["FW"]}{Color.END}")
+  print(f"• Project path {Color.GREY}-p{Color.END}: {Color.CREAM}{info["PRO"]}{Color.END}")
+  print(f"• Project last modification: {get_last_modification(args.project)}")
+  print(f"• Build path {Color.GREY}-b{Color.END}: {Color.CREAM}{info["BUILD"]}{Color.END}")
+  print(f"• Optimization level {Color.GREY}-o{Color.END}: {info["OPT"]}")
+  ctrl = ctrl_define[info["CTRL"]] if info["CTRL"] in ctrl_define else f"{Color.RED}Not found{Color.END}"
+  print(f"• Controller {Color.GREY}-c{Color.END}: {ctrl}")
+  exit_flag = True
+
+if exit_flag: sys.exit()
 
 controller_define = {
   "void": "STM32G0",
@@ -76,10 +94,12 @@ controller_define = {
   "aio": "OPENCPLC_AIO",
   "eco": "OPENCPLC_ECO"
 }
+args.controller = args.controller.lower()
 
 if args.controller not in controller_define:
   print(f"{ERR} Sterownik {Color.BLUE}opencplc-{args.controller}{Color.END} nie istnieje lub nie jest oficjalnie wspierany")
   print(f"{INFO} Jeżeli korzystasz z własnej konstrukcji zastosuj {Color.GREY}-c --controller{Color.END} {Color.CREAM}custom{Color.END}")
+  sys.exit()
 else: CONTROLLER = controller_define[args.controller]
 
 if not args.memory:
@@ -195,10 +215,9 @@ utils.make_folder(INC)
 utils.make_folder(LIB)
 if args.controller != "void": utils.make_folder(PLC)
 
-# if args.reset:
-#   if os.path.exists("./makefile"):
-#     os.remove("./makefile")
-#     print(f"{WARN} Usunięto plik {Color.YELLOW}makefile{Color.END}")
+if os.path.exists("./makefile"):
+  os.remove("./makefile")
+  print(f"{INFO} Plik {Color.YELLOW}makefile{Color.END} został nadpisany")
 
 new_makefile = False
 
@@ -219,17 +238,24 @@ if not os.path.exists("./makefile"):
     else:
       LD_FILE = ld_files[0]
 
+  fw:str = args.framework.replace("\\", "/").lstrip("./")
+  pro:str = args.framework.replace("\\", "/").lstrip("./")
+  build:str = args.build.replace("\\", "/").lstrip("./")
+
   inc = utils.files_list(INC, ".c")
   lib = utils.files_list(LIB, ".c")
   plc = utils.files_list(PLC, ".c")
   scr = utils.files_list(args.project, ".c")
+
   c_sources = {**inc, **lib, **plc, **scr}
   C_SOURCES = ""
   for folder, files in c_sources.items():
     for file in files:
       file:str = file.replace("\\", "/").lstrip("./")
       folder:str = folder.replace("\\", "/").lstrip("./")
-      if folder == f"{PLC}/brd" and file != f"{PLC}/brd/opencplc-" + args.controller + ".c": continue      
+      if folder == f"{PLC}/brd" and file != f"{PLC}/brd/opencplc-" + args.controller + ".c": continue
+      file = utils.replace_start(file, fw, "$(FW)")
+      file = utils.replace_start(file, fw, "$(PRO)")
       if utils.len_last_line(C_SOURCES) > 80: C_SOURCES += "\\\n"
       C_SOURCES += file.replace("\\", "/").lstrip("./") + " "
   LD_FILE = LD_FILE.replace("\\", "/").lstrip("./")
@@ -242,7 +268,8 @@ if not os.path.exists("./makefile"):
   ASM_SOURCES = ""
   for folder, files in asm_sources.items():
     for file in files:
-      file:str
+      file:str = utils.replace_start(file, fw, "$(FW)")
+      file = utils.replace_start(file, fw, "$(PRO)")
       if utils.len_last_line(ASM_SOURCES) > 80: ASM_SOURCES += "\\\n"
       ASM_SOURCES += file.replace("\\", "/").lstrip("./") + " "
 
@@ -253,27 +280,29 @@ if not os.path.exists("./makefile"):
   c_includes = {**inc, **lib, **plc, **scr}
   C_INCLUDES = ""
   for folder, files in c_includes.items():
-    folder:str
+    folder:str = utils.replace_start(folder, fw, "$(FW)")
+    folder = utils.replace_start(folder, fw, "$(PRO)")
     if utils.len_last_line(C_INCLUDES) > 80: C_INCLUDES += "\\\n"
     C_INCLUDES += "-I" + folder.replace("\\", "/").lstrip("./") + " "
 
   create_file("makefile", sf.makefile, ".", {
+    "${FRAMEWORK}": args.framework.replace('\\', '\\\\').replace('/', '\\\\'),
+    "${PROJECT}": args.project.replace('\\', '\\\\').replace('/', '\\\\'),
     "${NAME}": args.name,
     "${OPT}": args.opt,
-    "${BUILD}": args.build,
+    "${BUILD}": build,
     "${FAMILY}": FAMILY,
     "${CONTROLLER}": CONTROLLER,
     "${C_SOURCES}": C_SOURCES,
     "${ASM_SOURCES}": ASM_SOURCES,
     "${C_INCLUDES}": C_INCLUDES,
-    "${LD_FILE}": LD_FILE,
-    "${FRAMEWORK}": args.framework.replace('\\', '\\\\').replace('/', '\\\\'),
-    "${PROJECT}": args.project.replace('\\', '\\\\').replace('/', '\\\\')
+    "${LD_FILE}": LD_FILE
   })
   new_makefile = True
 
 else:
-  print(f"{INFO} Plik {Color.CREAM}makefile{Color.END} już istnieje. Jeżeli chcesz go nadpisać użyj flagi {Color.GREY}-r --reset{Color.END}")
+  print(f"{ERR} Nie można nadpisać pliku {Color.CREAM}makefile{Color.END}. Usuń go ręcznie!")
+  sys.exit()
 
 utils.make_folder("./.vscode")
 

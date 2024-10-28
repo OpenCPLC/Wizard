@@ -1,6 +1,10 @@
-import winreg, os, subprocess, codecs, json, glob
+import winreg, os, subprocess, codecs, json, glob, re
 from datetime import datetime
 from typing import Callable
+
+def replace_start(text: str, find:str, replace:str):
+  pattern = rf"(?m)^{re.escape(find)}\b"
+  return re.sub(pattern, replace, text)
 
 def program_recognized(name:str) -> bool:
   try:
@@ -104,3 +108,34 @@ class Env:
       return True
     except Exception as e:
       return False
+    
+def read_makefile_lines(file_path):
+  lines = []
+  with open(file_path, "r") as file:
+    current_line = ""
+    for line in file:
+      line = line.split("#", 1)[0].rstrip()
+      if line.endswith("\\"):
+        current_line += line[:-1].rstrip()
+      else:
+        current_line += line
+        current_line = current_line.replace("\\\\", "\\")
+        if current_line.strip():
+          lines.append(current_line)
+        current_line = ""
+    if current_line.strip():
+      current_line = current_line.replace("\\\\", "\\")
+      lines.append(current_line)
+  return lines
+
+def get_vars(lines:list[str], prefix_list:list[str]):
+  lines = [s for s in lines if any(s.startswith(prefix) for prefix in prefix_list)]
+  vars = {}
+  pattern = r"^\s*(\w+)\s*=\s*(.*)"
+  for line in lines:
+    match = re.match(pattern, line)
+    if match:
+      key = match.group(1).strip()
+      value = match.group(2).strip()
+      vars[key] = value
+  return vars
