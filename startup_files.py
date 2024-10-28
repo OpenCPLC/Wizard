@@ -253,7 +253,7 @@ properties_json = """
       ],
       "defines": [
         "${FAMILY}",
-        "${CONTROLLER}"
+        "${CTRL}"
       ],
       "cStandard": "c11",
       "cppStandard": "c++17",
