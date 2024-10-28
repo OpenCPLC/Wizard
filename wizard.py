@@ -53,13 +53,13 @@ if not args.project:
 exit_flag = False
 
 if args.list:
-  msg = f"{Color.TEAL}OpenCPLC{Color.END} projects: "
+  msg = f"Projects: "
   for key, info in data.items():
     color = {
-      "Uno": Color.CYAN,
+      "Uno": Color.TEAL,
       "DIO": Color.BLUE,
       "AIO": Color.GREEN,
-      "Eco": Color.YELLOW,
+      "Eco": Color.CYAN,
       "Void": Color.MAGENTA,
       "Custom": Color.RED
     }[info["controller"]]
@@ -117,9 +117,9 @@ def isyes():
   yes = input().lower()
   return yes == "tak" or yes == "t" or yes == "true" or yes == "yes" or yes == "y"
 
-KEY = args.name.lower()
-if KEY in data:
-  if args.select:
+if args.select:
+  KEY = args.select.lower()
+  if KEY in data:
     args.name = data[KEY]["name"]
     args.controller = data[KEY]["controller"]
     if args.controller in ["void", "custom"]:
@@ -129,10 +129,17 @@ if KEY in data:
     args.build = data[KEY]["build"]
     args.opt = data[KEY]["opt"]
   else:
+    print(f"{ERR} Projekt o nazwie {Color.YELLOW}{args.name}{Color.END} nie istnieje")
+    print(f"{INFO} Do wyświetlania listy projektów służy flaga {Color.GREY}-l --list{Color.END}")
+    print(f"{INFO} Aby stworzyć nowy projekt zastosuj: {Color.GREY}-n --name{Color.END} {args.name}")
+    sys.exit()
+else:
+  KEY = args.name.lower()
+  if KEY in data:
     print(f"{WARN} Projekt o nazwie {Color.YELLOW}{args.name}{Color.END} już istnieje")
-    print(f"{INFO} Czy nadpisać konfigurację? {YES_NO}:", end=" ")
+    print(f"{WARN} Czy nadpisać konfigurację? {YES_NO}:", end=" ")
     if not isyes():
-      print(f"{INFO} Do przełączania między istniejącymi projektami służy flaga {Color.GREY}-s --select{Color.END}")
+      print(f"{INFO} Aby przełączyć się na istniejący projekt zastosuj: {Color.GREY}-s --select{Color.END} {args.name}")
       sys.exit()
 
 controller_define = {
@@ -270,7 +277,7 @@ new_makefile = False
 
 if not os.path.exists("./makefile"):
 
-  ld = utils.files_list("./", ".ld")
+  ld = utils.files_list(args.project, ".ld")
   ld_count = len(ld)
   if ld_count == 0:
     LD_FILE = create_file("flash.ld", sf.flash_ld, args.project, {

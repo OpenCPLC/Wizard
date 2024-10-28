@@ -61,7 +61,7 @@ CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
 CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
-LDSCRIPT = projects/app/flash.ld
+LDSCRIPT = projects/blinky/flash.ld
 
 LIBS = -lc -lm -lnosys
 LIBDIR = 
@@ -102,6 +102,8 @@ build: all
 flash: all
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "program $(BUILD)/$(TARGET).elf verify reset exit"
 
+run: flash
+
 earse:
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "init; halt; stm32g0x mass_erase 0; reset; exit"
 
@@ -112,10 +114,12 @@ clean:
 	endif
 	if [ -d "$(BUILD)\\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(PRO); fi
 
+clr: clean
+
 clean_all:
 	if [ -d "$(BUILD)" ]; then cmd /c rmdir /s /q $(BUILD); fi
 
-.PHONY: all build flash earse clean clean_all
+.PHONY: all build flash run earse clean clr clean_all
 
 -include $(wildcard $(BUILD)/$(TARGET).d)
 ifeq ($(DEVELOP), True)
