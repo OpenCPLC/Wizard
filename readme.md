@@ -3,11 +3,18 @@
 **Wizard** jest aplikacją konsolową usprawniającą pracę z **OpenCPLC**, którego zadaniem jest dostosowanie środowiska pracy tak, aby 👨‍💻programista-automatyk mógł skupić się na tworzeniu aplikacji, a nie walce z konfiguracją ekosystemu i kompilacją programu. Pobierz **`wizard.exe`** z 🚀[Releases](https://github.com/OpenCPLC/Wizard/releases) i umieść go w wybranym folderze, który będzie pełnił rolę przestrzeni roboczej _(workspace)_. Następnie otwórz konsolę i wpisz:
 
 ```bash
-./wizard.exe -n <project_name> -c <controller>
+./wizard.exe -n <new_project_name> -c <controller>
 ./wizard.exe -n blinky -c Uno
 ```
 
 Konsola systemowa jest dostępna w wielu aplikacjach, takich jak **Command Prompt**, **PowerShell**, [**GIT Bash**](https://git-scm.com/downloads), a nawet terminal w [**VSCode**](https://code.visualstudio.com/). Gdy wywołanie w konsoli zwróci błąd, prawdopodobnie nie została otwarta w przestrzeni roboczej i nie widzi aplikacji `wizard.exe`. Możesz zamknąć konsolę i otworzyć ją w odpowiednim folderze lub przejść ręcznie, używając komendy `cd`.
+
+Gdy będziemy mieli więcej projektów, będziemy mogli swobodnie przełączać się między nimi.
+
+```bash
+./wizard.exe -s <existing_project_name>
+./wizard.exe -s blinky
+```
 
 ### 🤔 How works?
 
@@ -21,11 +28,13 @@ Najważniejszą funkcjonalnością 🪄**Wizard**'a jest przygotowanie pliku `ma
 
 Ostatnim zadaniem 🔮**Wizard**'a jest utworzenie plików konfiguracyjnych dla VSCode, które integrują IDE z zainstalowanymi programami oraz z projektem.
 
+Niezbędne informacje o utworzonych projektach są przechowywane w pliku `wizard.json`. Ten mechanizm umożliwia swobodne przełączanie się `-s --select` między projektami bez utraty konfiguracji, ponieważ zawiera kompletny zestaw informacji potrzebnych do ich odtworzenia. Po usunięciu katalogu z projektem zostanie on automatycznie usunięty z listy.
+
 ### 🚩 Flags
 
 Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mogą pozostać niezmienione, ale warto znać ich istnienie. Poniżej znajduje się lista wszystkich flag:
 
-- `-n --name`: Nazwa projektu _(domyślnie: `app`)_. Końcowy plik wsadowy programu `.bin`/`.hex` będzie nosił tą nazwę.
+- `-n --name`: Nazwa projektu _(domyślnie: `app`)_. Będzie wykorzystywany do przełączania się między różnymi projektami. Końcowy plik wsadowy programu `.bin`/`.hex` będzie nosił tą nazwę.
 - `-c --controller`: Model sterownika PLC z oficjalnie wspieranych konstrukcji: `Uno`, `DIO`, `AIO`, `Eco` (domyślnie: `Uno`), lub:
   - `Custom` - dla konstrukcji niestandardowej w ramach frameworku **OpenCPLC**
   - `Void` - dla projektu **STM32** pozbawionego warstwy abstrakcji dedykowanej sterownikom PLC
@@ -34,5 +43,8 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-b --build`: Lokalizacja/katalog dla skompilowanych plików framework'u i projektu _(domyślnie: `build`)_. Bezpośrednio w tym folderze zostanie umieszczony końcowy plik wsadowy programu `.bin`/`.hex`.
 - `-m --memory`: Ilość pamięci FLASH w wykorzystywanej płytce. Nie należy ustawiać dla oficjalnie wspieranych konstrukcji. W przypadku konstrukcji niestandardowych należy wybrać `128kB` lub `512kB`, w zależności od użytego mikrokontrolera.
 - `-o --opt`: Poziom optymalizacji kodu dla kompilacji: `O0`, `Og`, `O1`, `O2`, `O3` _(default: `Og`)_
+- `-s --select`: Umożliwia przełączanie się między istniejącymi projektami. Gdy projekt zostanie utworzony, a następnie utworzymy nowy, powrót do pierwszego projektu polega na wywołaniu z tą flagą i podaniu jego nazwy.
+- `-d --develop`: Tryb developera. Tę flagę należy ustawić, gdy zamierzamy modyfikować pliki framework'u/bibliotek.
+- `-l --list`: Wyświetla listę istniejących projektów.
 - `-v --version`: Zwraca wersję programu 🧙🏼‍♂️**Wizard** oraz ścieżkę repozytorium.
 - `-i --info`: Zwraca podstawowe informacje o bieżącym projekcie, czyli tym, nad którym aktualnie pracujesz. Dla tego projektu jest przygotowywany plik `makefile`, a polecenie `make` będzie z nim współpracować.

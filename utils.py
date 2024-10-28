@@ -75,6 +75,16 @@ def save_json_prettie(name:str, content:dict):
   openFile.write(json.dumps(content, indent=2))
   openFile.close()
 
+def load_json(name:str):
+  if not os.path.exists(name):
+    return None
+  try:
+    with open(name, 'r') as file:
+      data = json.load(file)
+      return data if data else {}
+  except json.JSONDecodeError:
+    return None
+
 class Env:
     
   @staticmethod

@@ -126,12 +126,13 @@ SECTIONS
 
 makefile = """
 TARGET = ${NAME}
+CTRL = ${CTRL}
 FW = ${FRAMEWORK}
 PRO = ${PROJECT}
 BUILD = ${BUILD}
 OPT = ${OPT}
 FAMILY = ${FAMILY} 
-CTRL = ${CONTROLLER}
+DEVELOP = ${DEVELOP} 
 
 C_SOURCES = \\
 ${C_SOURCES}
@@ -178,7 +179,8 @@ LDSCRIPT = ${LD_FILE}
 
 LIBS = -lc -lm -lnosys
 LIBDIR = 
-LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD)/$(TARGET).map,--cref -Wl,--gc-sections
+LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS)
+LDFLAGS += -Wl,-Map=$(BUILD)/$(TARGET).map,--cref -Wl,--gc-sections
 
 all: $(BUILD)/$(TARGET).elf $(BUILD)/$(TARGET).hex $(BUILD)/$(TARGET).bin
 
@@ -214,20 +216,30 @@ build: all
 flash: all
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "program $(BUILD)/$(TARGET).elf verify reset exit"
 
+run: flash
+
 earse:
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "init; halt; stm32g0x mass_erase 0; reset; exit"
 
 clean:
 	cmd /c del /q $(BUILD)\\\\$(TARGET).* && \\
-	if [ -d "$(BUILD)\\\\$(FW)" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(FW); fi && \\
+	ifeq ($(DEVELOP), True)
+		if [ -d "$(BUILD)\\\\$(FW)" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(FW); fi && \\
+	endif
 	if [ -d "$(BUILD)\\\\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(PRO); fi
+
+clr: clean
 
 clean_all:
 	if [ -d "$(BUILD)" ]; then cmd /c rmdir /s /q $(BUILD); fi
 
-.PHONY: all build flash earse clean clean_all
+.PHONY: all build flash run earse clean clr clean_all
 
--include $(wildcard $(BUILD)/*.d)
+-include $(wildcard $(BUILD)/$(TARGET).d)
+ifeq ($(DEVELOP), True)
+  -include $(wildcard $(BUILD)/$(FW)/*.d)
+endif
+-include $(wildcard $(BUILD)/$(PRO)/*.d)
 """
 
 properties_json = """

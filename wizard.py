@@ -13,11 +13,13 @@ parser.add_argument("-p", "--project", type=str, help="Lokalizacja aktywnego pro
 parser.add_argument("-b", "--build", type=str, help="Lokalizacja dla skompilowanych plików framework'u i projektu (default: build)", default="build")
 parser.add_argument("-m", "--memory", type=str, help="Ilość pamięci FLASH w wykorzystywanej płytce {128kB|512kB}", default="")
 parser.add_argument("-o", "--opt", type=str, help="Poziom optymalizacji kompilacji {O0, Og, O1, O2, O3} (default: Og)", default="Og")
+parser.add_argument("-s", "--select", type=str, help="Umożliwia przełączanie się między istniejącymi projektami", default="")
+parser.add_argument("-d", "--develop", action="store_true", help="Tryb developera (należy ustawić, gdy modyfikuje się framework)", default=False)
+parser.add_argument("-l", "--list", action="store_true", help="Wyświetla listę istniejących projektów", default=False)
 parser.add_argument("-v", "--version", action="store_true", help="Wersję programu 'wizard' oraz inne informacje", default=False)
 parser.add_argument("-i", "--info", action="store_true", help="Zwraca podstawowe informacje o bieżącym projekcie", default=False)
 parser.add_argument("-hl", "--hash", nargs="+", type=str, help="[Hash] Lista tagów do za-hash'owania")
-parser.add_argument("-ht", "--title", type=str, help="[Hash] Tytół dla enum'a, który zostanie utworzony z listy hash'ów", default="")
-parser.add_argument("-hs", "--switch", action="store_true", help="[Hash] Czy wyświetlić gotowy kod switch-case do skopiowania?", default=False)
+parser.add_argument("-ht", "--hash_title", type=str, help="[Hash] Tytół dla enum'a, który zostanie utworzony z listy hash'ów", default="")
 args = parser.parse_args()
 
 class Color():
@@ -36,17 +38,35 @@ OK = f"{Color.GREEN}OK{Color.END}"
 ERR = f"{Color.RED}ERROR{Color.END}"
 WARN = f"{Color.MAGENTA}WARN{Color.END}"
 INFO = f"{Color.BLUE}INFO{Color.END}"
+YES_NO = f"[{Color.GREEN}TAK{Color.END}/{Color.RED}NIE{Color.END}]"
+
+data = utils.load_json("wizard.json")
+if not data: data = {}
+
+keys_to_remove = [key for key, info in data.items() if not os.path.exists(info["project"])]
+for key in keys_to_remove:
+  del data[key]
 
 if not args.project:
   args.project = f"projects/{args.name}"
 
-if args.hash:
-  import chash
-  c_code = chash.c_code_enum(args.hash, args.title)
-  print(c_code)
-  sys.exit()
-
 exit_flag = False
+
+if args.list:
+  msg = f"{Color.TEAL}OpenCPLC{Color.END} projects: "
+  for key, info in data.items():
+    color = {
+      "Uno": Color.CYAN,
+      "DIO": Color.BLUE,
+      "AIO": Color.GREEN,
+      "Eco": Color.YELLOW,
+      "Void": Color.MAGENTA,
+      "Custom": Color.RED
+    }[info["controller"]]
+    msg += f"{color}{info["name"]}{Color.END}, "
+  msg = msg.rstrip(", ")
+  print(msg)
+  exit_flag = True
 
 if args.version:
   print(f"{Color.TEAL}Wizard{Color.END} OpenCPLC {Color.CYAN}1.0.0{Color.END}-rc.3")
@@ -75,16 +95,45 @@ if args.info:
   }
   print(f"{Color.TEAL}OpenCPLC{Color.END} project information:")
   print(f"• Name {Color.GREY}-n{Color.END}: {Color.CYAN}{info["TARGET"]}{Color.END}")
+  ctrl = ctrl_define[info["CTRL"]] if info["CTRL"] in ctrl_define else f"{Color.RED}Not found{Color.END}"
+  print(f"• Controller {Color.GREY}-c{Color.END}: {ctrl}")
   print(f"• Framework path {Color.GREY}-f{Color.END}: {Color.CREAM}{info["FW"]}{Color.END}")
+  print(f"• Workspace initialization: {get_last_modification(args.framework)}")
   print(f"• Project path {Color.GREY}-p{Color.END}: {Color.CREAM}{info["PRO"]}{Color.END}")
   print(f"• Project last modification: {get_last_modification(args.project)}")
   print(f"• Build path {Color.GREY}-b{Color.END}: {Color.CREAM}{info["BUILD"]}{Color.END}")
   print(f"• Optimization level {Color.GREY}-o{Color.END}: {info["OPT"]}")
-  ctrl = ctrl_define[info["CTRL"]] if info["CTRL"] in ctrl_define else f"{Color.RED}Not found{Color.END}"
-  print(f"• Controller {Color.GREY}-c{Color.END}: {ctrl}")
+  exit_flag = True
+
+if args.hash:
+  import chash
+  c_code = chash.c_code_enum(args.hash, args.hash_title)
+  print(c_code)
   exit_flag = True
 
 if exit_flag: sys.exit()
+
+def isyes():
+  yes = input().lower()
+  return yes == "tak" or yes == "t" or yes == "true" or yes == "yes" or yes == "y"
+
+KEY = args.name.lower()
+if KEY in data:
+  if args.select:
+    args.name = data[KEY]["name"]
+    args.controller = data[KEY]["controller"]
+    if args.controller in ["void", "custom"]:
+      args.memory = data[KEY]["memory"]
+    args.framework = data[KEY]["framework"]
+    args.project = data[KEY]["project"]
+    args.build = data[KEY]["build"]
+    args.opt = data[KEY]["opt"]
+  else:
+    print(f"{WARN} Projekt o nazwie {Color.YELLOW}{args.name}{Color.END} już istnieje")
+    print(f"{INFO} Czy nadpisać konfigurację? {YES_NO}:", end=" ")
+    if not isyes():
+      print(f"{INFO} Do przełączania między istniejącymi projektami służy flaga {Color.GREY}-s --select{Color.END}")
+      sys.exit()
 
 controller_define = {
   "void": "STM32G0",
@@ -98,9 +147,9 @@ args.controller = args.controller.lower()
 
 if args.controller not in controller_define:
   print(f"{ERR} Sterownik {Color.BLUE}opencplc-{args.controller}{Color.END} nie istnieje lub nie jest oficjalnie wspierany")
-  print(f"{INFO} Jeżeli korzystasz z własnej konstrukcji zastosuj {Color.GREY}-c --controller{Color.END} {Color.CREAM}custom{Color.END}")
+  print(f"{INFO} Jeżeli korzystasz z własnej konstrukcji zastosuj: {Color.GREY}-c --controller{Color.END} custom")
   sys.exit()
-else: CONTROLLER = controller_define[args.controller]
+else: CTRL = controller_define[args.controller]
 
 if not args.memory:
   if args.controller in ["eco", "void"]: args.memory = "128kB"
@@ -123,13 +172,11 @@ else: FLASH -= 20
 BASE_URL = "http://sqrt.pl"
 BASE_PATH = "C:\\OpenCPLC"
 BASE_REPO = "https://github.com/OpenCPLC/Core"
-YES_NO = f"[{Color.GREEN}TAK{Color.END}/{Color.RED}NIE{Color.END}]"
 
 def install(name:str, yes:bool=False):
-  print(f"Program {Color.BLUE}{name}{Color.END} nie jest zainstalowany.", end=" ")
-  print(f"Czy zrobić to automatycznie? {YES_NO}:", end=" ")
-  yes_no = input().lower()
-  if yes_no != "tak" and yes_no != "t" and yes_no != "true":
+  print(f"{WARN} Program {Color.BLUE}{name}{Color.END} nie jest zainstalowany.")
+  print(f"{INFO} Czy zrobić to automatycznie? {YES_NO}:", end=" ")
+  if not isyes():
     print(f"{ERR} Zapoznaj się z instrukcją {Color.BLUE}{BASE_REPO}{Color.END}!")
     sys.exit()
   try:
@@ -255,7 +302,7 @@ if not os.path.exists("./makefile"):
       folder:str = folder.replace("\\", "/").lstrip("./")
       if folder == f"{PLC}/brd" and file != f"{PLC}/brd/opencplc-" + args.controller + ".c": continue
       file = utils.replace_start(file, fw, "$(FW)")
-      file = utils.replace_start(file, fw, "$(PRO)")
+      file = utils.replace_start(file, pro, "$(PRO)")
       if utils.len_last_line(C_SOURCES) > 80: C_SOURCES += "\\\n"
       C_SOURCES += file.replace("\\", "/").lstrip("./") + " "
   LD_FILE = LD_FILE.replace("\\", "/").lstrip("./")
@@ -269,7 +316,7 @@ if not os.path.exists("./makefile"):
   for folder, files in asm_sources.items():
     for file in files:
       file:str = utils.replace_start(file, fw, "$(FW)")
-      file = utils.replace_start(file, fw, "$(PRO)")
+      file = utils.replace_start(file, pro, "$(PRO)")
       if utils.len_last_line(ASM_SOURCES) > 80: ASM_SOURCES += "\\\n"
       ASM_SOURCES += file.replace("\\", "/").lstrip("./") + " "
 
@@ -281,18 +328,19 @@ if not os.path.exists("./makefile"):
   C_INCLUDES = ""
   for folder, files in c_includes.items():
     folder:str = utils.replace_start(folder, fw, "$(FW)")
-    folder = utils.replace_start(folder, fw, "$(PRO)")
+    folder = utils.replace_start(folder, pro, "$(PRO)")
     if utils.len_last_line(C_INCLUDES) > 80: C_INCLUDES += "\\\n"
     C_INCLUDES += "-I" + folder.replace("\\", "/").lstrip("./") + " "
 
   create_file("makefile", sf.makefile, ".", {
+    "${NAME}": args.name,
+    "${CTRL}": CTRL,
     "${FRAMEWORK}": args.framework.replace('\\', '\\\\').replace('/', '\\\\'),
     "${PROJECT}": args.project.replace('\\', '\\\\').replace('/', '\\\\'),
-    "${NAME}": args.name,
     "${OPT}": args.opt,
     "${BUILD}": build,
     "${FAMILY}": FAMILY,
-    "${CONTROLLER}": CONTROLLER,
+    "${DEVELOP}": args.develop,
     "${C_SOURCES}": C_SOURCES,
     "${ASM_SOURCES}": ASM_SOURCES,
     "${C_INCLUDES}": C_INCLUDES,
@@ -312,7 +360,7 @@ if new_makefile or not os.path.exists(".vscode/c_cpp_properties.json"):
     "${PROJECT}": args.project,
     "${NAME}": args.name,
     "${FAMILY}": FAMILY,
-    "${CONTROLLER}": CONTROLLER
+    "${CTRL}": CTRL
   })
 
 if new_makefile or not os.path.exists(".vscode/launch.json"):
@@ -330,3 +378,21 @@ if not os.path.exists(".vscode/settings.json"):
 
 if not os.path.exists(".vscode/extensions.json"):
   create_file("extensions.json", sf.extensions_json, ".vscode")
+
+if KEY not in data: data[KEY] = {}
+data[KEY]["name"] = args.name
+data[KEY]["controller"] = {"void": "Void", "custom": "Custom", "uno": "Uno", "dio": "DIO", "aio": "AIO", "eco": "Eco" }[args.controller]
+if args.controller in ["void", "custom"]:
+  data[KEY]["memory"] = args.memory
+data[KEY]["framework"] = args.framework
+data[KEY]["project"] = args.project
+data[KEY]["build"] = args.build
+data[KEY]["opt"] = args.opt
+
+
+
+
+utils.save_json_prettie("wizard.json", data)
+
+# load wizard.json
+# if save_json_prettie()

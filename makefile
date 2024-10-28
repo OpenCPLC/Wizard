@@ -1,10 +1,11 @@
-TARGET = app
+TARGET = blinky
+CTRL = OPENCPLC_UNO
 FW = opencplc
-PRO = projects\\app
+PRO = projects\\blinky
 BUILD = build
 OPT = Og
 FAMILY = STM32G0C1xx 
-CTRL = OPENCPLC_UNO
+DEVELOP = False 
 
 C_SOURCES = \
 $(FW)/inc/int.c $(FW)/inc/startup.c $(FW)/inc/ST/syscalls.c $(FW)/inc/ST/sysmem.c \
@@ -18,7 +19,7 @@ $(FW)/lib/per/tim.c $(FW)/lib/sys/new.c $(FW)/lib/sys/vrts.c $(FW)/plc/app/hd447
 $(FW)/plc/brd/opencplc-uno.c $(FW)/plc/com/modbus-master.c $(FW)/plc/com/modbus-slave.c \
 $(FW)/plc/com/one-wire.c $(FW)/plc/per/ain.c $(FW)/plc/per/din.c $(FW)/plc/per/dout.c \
 $(FW)/plc/per/max31865.c $(FW)/plc/per/pwmi.c $(FW)/plc/per/rgb.c $(FW)/plc/utils/cron.c \
-$(FW)/plc/utils/timer.c projects/app/main.c 
+$(FW)/plc/utils/timer.c projects/blinky/main.c 
 
 ASM_SOURCES = \
 $(FW)/lib/sys/vrts-pendsv.s 
@@ -51,7 +52,7 @@ ASM_INCLUDES =
 C_INCLUDES = \
 -I$(FW)/inc -I$(FW)/inc/CMSIS -I$(FW)/inc/ST -I$(FW)/lib/dev -I$(FW)/lib/ext -I$(FW)/lib/ifc \
 -I$(FW)/lib/per -I$(FW)/lib/sys -I$(FW)/plc/app -I$(FW)/plc/brd -I$(FW)/plc/com -I$(FW)/plc/per \
--I$(FW)/plc/utils -Iprojects/app 
+-I$(FW)/plc/utils -Iprojects/blinky 
 
 ASFLAGS = $(MCU) $(AS_DEFS) $(ASM_INCLUDES) -$(OPT) -Wall -fdata-sections -ffunction-sections
 CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) -$(OPT) -Wall -fdata-sections -ffunction-sections
@@ -64,7 +65,8 @@ LDSCRIPT = projects/app/flash.ld
 
 LIBS = -lc -lm -lnosys
 LIBDIR = 
-LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD)/$(TARGET).map,--cref -Wl,--gc-sections
+LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS)
+LDFLAGS += -Wl,-Map=$(BUILD)/$(TARGET).map,--cref -Wl,--gc-sections
 
 all: $(BUILD)/$(TARGET).elf $(BUILD)/$(TARGET).hex $(BUILD)/$(TARGET).bin
 
@@ -105,7 +107,9 @@ earse:
 
 clean:
 	cmd /c del /q $(BUILD)\\$(TARGET).* && \
-	if [ -d "$(BUILD)\\$(FW)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(FW); fi && \
+	ifeq ($(DEVELOP), True)
+		if [ -d "$(BUILD)\\$(FW)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(FW); fi && \
+	endif
 	if [ -d "$(BUILD)\\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(PRO); fi
 
 clean_all:
@@ -113,4 +117,8 @@ clean_all:
 
 .PHONY: all build flash earse clean clean_all
 
--include $(wildcard $(BUILD)/*.d)
+-include $(wildcard $(BUILD)/$(TARGET).d)
+ifeq ($(DEVELOP), True)
+  -include $(wildcard $(BUILD)/$(FW)/*.d)
+endif
+-include $(wildcard $(BUILD)/$(PRO)/*.d)
