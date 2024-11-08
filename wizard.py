@@ -98,9 +98,9 @@ if args.info:
   ctrl = ctrl_define[info["CTRL"]] if info["CTRL"] in ctrl_define else f"{Color.RED}Not found{Color.END}"
   print(f"• Controller {Color.GREY}-c{Color.END}: {ctrl}")
   print(f"• Framework path {Color.GREY}-f{Color.END}: {Color.CREAM}{info["FW"]}{Color.END}")
-  print(f"• Workspace initialization: {get_last_modification(args.framework)}")
+  print(f"• Workspace initialization: {get_last_modification(info["FW"])}")
   print(f"• Project path {Color.GREY}-p{Color.END}: {Color.CREAM}{info["PRO"]}{Color.END}")
-  print(f"• Project last modification: {get_last_modification(args.project)}")
+  print(f"• Project last modification: {get_last_modification(info["PRO"])}")
   print(f"• Build path {Color.GREY}-b{Color.END}: {Color.CREAM}{info["BUILD"]}{Color.END}")
   print(f"• Optimization level {Color.GREY}-o{Color.END}: {info["OPT"]}")
   exit_flag = True
