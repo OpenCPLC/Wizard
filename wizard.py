@@ -69,7 +69,7 @@ if args.list:
   exit_flag = True
 
 if args.version:
-  print(f"{Color.TEAL}Wizard{Color.END} OpenCPLC {Color.CYAN}1.0.0{Color.END}-rc.3")
+  print(f"{Color.TEAL}Wizard{Color.END} OpenCPLC {Color.CYAN}1.0.0{Color.END}-rc.4")
   print(f"Repo: {Color.CREAM}https://github.com/OpenCPLC/Wizard{Color.END}")
   exit_flag = True
 
@@ -342,8 +342,8 @@ if not os.path.exists("./makefile"):
   create_file("makefile", sf.makefile, ".", {
     "${NAME}": args.name,
     "${CTRL}": CTRL,
-    "${FRAMEWORK}": args.framework.replace('\\', '\\\\').replace('/', '\\\\'),
-    "${PROJECT}": args.project.replace('\\', '\\\\').replace('/', '\\\\'),
+    "${FRAMEWORK}": fw.replace('\\', '\\\\').replace('/', '\\\\'),
+    "${PROJECT}": pro.replace('\\', '\\\\').replace('/', '\\\\'),
     "${OPT}": args.opt,
     "${BUILD}": build,
     "${FAMILY}": FAMILY,
@@ -363,8 +363,8 @@ utils.make_folder("./.vscode")
 
 if new_makefile or not os.path.exists(".vscode/c_cpp_properties.json"):
   create_file("c_cpp_properties.json", sf.properties_json, ".vscode", {
-    "${FRAMEWORK}": args.framework,
-    "${PROJECT}": args.project,
+    "${FRAMEWORK}": fw,
+    "${PROJECT}": pro,
     "${NAME}": args.name,
     "${FAMILY}": FAMILY,
     "${CTRL}": CTRL
@@ -372,6 +372,8 @@ if new_makefile or not os.path.exists(".vscode/c_cpp_properties.json"):
 
 if new_makefile or not os.path.exists(".vscode/launch.json"):
   create_file("launch.json", sf.launch_json, ".vscode", {
+    "${FRAMEWORK}": fw,
+    "${BUILD}": build,
     "${NAME}": args.name,
     "${DEVICE}": DEVICE,
     "${SVD}": SVD
@@ -391,9 +393,9 @@ data[KEY]["name"] = args.name
 data[KEY]["controller"] = {"void": "Void", "custom": "Custom", "uno": "Uno", "dio": "DIO", "aio": "AIO", "eco": "Eco" }[args.controller]
 if args.controller in ["void", "custom"]:
   data[KEY]["memory"] = args.memory
-data[KEY]["framework"] = args.framework
-data[KEY]["project"] = args.project
-data[KEY]["build"] = args.build
+data[KEY]["framework"] = fw
+data[KEY]["project"] = pro
+data[KEY]["build"] = build
 data[KEY]["opt"] = args.opt
 
 

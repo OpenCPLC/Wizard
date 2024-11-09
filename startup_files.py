@@ -288,7 +288,7 @@ launch_json = """
     {
       "name": "Debug",
       "cwd": "${workspaceRoot}",
-      "executable": "./build/${NAME}.elf",
+      "executable": "${BUILD}/${NAME}.elf",
       "request": "launch",
       "type": "cortex-debug",
       "servertype": "openocd",
@@ -297,7 +297,7 @@ launch_json = """
         "interface/stlink.cfg",
         "target/stm32g0x.cfg"
       ],
-      "svdFile": "./inc/ST/${SVD}",
+      "svdFile": "${FRAMEWORK}/inc/ST/${SVD}",
       "preLaunchTask": "make"
     }
   ]
@@ -328,7 +328,15 @@ settings_json = """
   },
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
-  "editor.mouseWheelZoom": true
+  "editor.mouseWheelZoom": true,
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      { "scope": "variable.other.global.c", "settings": { "foreground": "#62CCDC" } },
+      { "scope": "variable.other.local.c", "settings": { "foreground": "#9CDCFE" } },
+      { "scope": "variable.other", "settings": { "foreground": "#CCEDFE" } },
+      { "scope": "comment", "settings": { "foreground": "#777", "fontStyle": "italic" } }
+    ]
+  }
 }
 """
 
@@ -340,7 +348,8 @@ extensions_json = """
     "ms-vscode.makefile-tools",
     "ms-vscode.hexeditor",
     "mechatroner.rainbow-csv",
-    "marus25.cortex-debug"
+    "marus25.cortex-debug",
+    "jeff-hykin.better-cpp-syntax"
   ]
 }
 """
@@ -388,8 +397,6 @@ void loop(void)
 
 int main(void)
 {
-  // Inicjacja sterownika
-  PLC_Init(); 
   // Dodanie wątku sterownika
   thread(&PLC_Thread, stack_plc, sizeof(stack_plc));
   // Dodanie funkcji loop jako wątek
