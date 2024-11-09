@@ -13,7 +13,7 @@ parser.add_argument("-p", "--project", type=str, help="Lokalizacja aktywnego pro
 parser.add_argument("-b", "--build", type=str, help="Lokalizacja dla skompilowanych plików framework'u i projektu (default: build)", default="build")
 parser.add_argument("-m", "--memory", type=str, help="Ilość pamięci FLASH w wykorzystywanej płytce {128kB|512kB}", default="")
 parser.add_argument("-o", "--opt", type=str, help="Poziom optymalizacji kompilacji {O0, Og, O1, O2, O3} (default: Og)", default="Og")
-parser.add_argument("-s", "--select", type=str, help="Umożliwia przełączanie się między istniejącymi projektami", default="")
+parser.add_argument("-s", "--select", type=str, nargs="?", help="Umożliwia przełączanie się między istniejącymi projektami", const="", default=None)
 parser.add_argument("-d", "--develop", action="store_true", help="Tryb developera (należy ustawić, gdy modyfikuje się framework)", default=False)
 parser.add_argument("-l", "--list", action="store_true", help="Wyświetla listę istniejących projektów", default=False)
 parser.add_argument("-v", "--version", action="store_true", help="Wersję programu 'wizard' oraz inne informacje", default=False)
@@ -117,7 +117,10 @@ def isyes():
   yes = input().lower()
   return yes == "tak" or yes == "t" or yes == "true" or yes == "yes" or yes == "y"
 
-if args.select:
+if args.select != None:
+  if args.select == "":
+    lines = utils.read_makefile_lines("makefile")
+    args.select = utils.get_vars(lines, ["TARGET"])["TARGET"]
   KEY = args.select.lower()
   if KEY in data:
     args.name = data[KEY]["name"]
@@ -129,9 +132,9 @@ if args.select:
     args.build = data[KEY]["build"]
     args.opt = data[KEY]["opt"]
   else:
-    print(f"{ERR} Projekt o nazwie {Color.YELLOW}{args.name}{Color.END} nie istnieje")
+    print(f"{ERR} Projekt o nazwie {Color.YELLOW}{args.select}{Color.END} nie istnieje")
     print(f"{INFO} Do wyświetlania listy projektów służy flaga {Color.GREY}-l --list{Color.END}")
-    print(f"{INFO} Aby stworzyć nowy projekt zastosuj: {Color.GREY}-n --name{Color.END} {args.name}")
+    print(f"{INFO} Aby stworzyć nowy projekt zastosuj: {Color.GREY}-n --name{Color.END} {args.select}")
     sys.exit()
 else:
   KEY = args.name.lower()
@@ -293,13 +296,13 @@ if not os.path.exists("./makefile"):
       LD_FILE = ld_files[0]
 
   fw:str = args.framework.replace("\\", "/").lstrip("./")
-  pro:str = args.framework.replace("\\", "/").lstrip("./")
+  pro:str = args.project.replace("\\", "/").lstrip("./")
   build:str = args.build.replace("\\", "/").lstrip("./")
 
   inc = utils.files_list(INC, ".c")
   lib = utils.files_list(LIB, ".c")
   plc = utils.files_list(PLC, ".c")
-  scr = utils.files_list(args.project, ".c")
+  scr = utils.files_list(pro, ".c")
 
   c_sources = {**inc, **lib, **plc, **scr}
   C_SOURCES = ""
@@ -317,7 +320,7 @@ if not os.path.exists("./makefile"):
   inc = utils.files_list(INC, ".s")
   lib = utils.files_list(LIB, ".s")
   plc = utils.files_list(PLC, ".s")
-  scr = utils.files_list(args.project, ".s")
+  scr = utils.files_list(pro, ".s")
   asm_sources = {**inc, **lib, **plc, **scr}
   ASM_SOURCES = ""
   for folder, files in asm_sources.items():
@@ -330,7 +333,7 @@ if not os.path.exists("./makefile"):
   inc = utils.files_list(INC, ".h")
   lib = utils.files_list(LIB, ".h")
   plc = utils.files_list(PLC, ".h")
-  scr = utils.files_list(args.project, ".h")
+  scr = utils.files_list(pro, ".h")
   c_includes = {**inc, **lib, **plc, **scr}
   C_INCLUDES = ""
   for folder, files in c_includes.items():
@@ -398,10 +401,4 @@ data[KEY]["project"] = pro
 data[KEY]["build"] = build
 data[KEY]["opt"] = args.opt
 
-
-
-
 utils.save_json_prettie("wizard.json", data)
-
-# load wizard.json
-# if save_json_prettie()

@@ -9,6 +9,12 @@
 
 Konsola systemowa jest dostępna w wielu aplikacjach, takich jak **Command Prompt**, **PowerShell**, [**GIT Bash**](https://git-scm.com/downloads), a nawet terminal w [**VSCode**](https://code.visualstudio.com/). Gdy wywołanie w konsoli zwróci błąd, prawdopodobnie nie została otwarta w przestrzeni roboczej i nie widzi aplikacji `wizard.exe`. Możesz zamknąć konsolę i otworzyć ją w odpowiednim folderze lub przejść ręcznie, używając komendy `cd`.
 
+Jeśli dodamy nowe pliki do projektu, konieczne będzie jego odświeżenie.
+
+```bash
+./wizard.exe -s
+```
+
 Gdy będziemy mieli więcej projektów, będziemy mogli swobodnie przełączać się między nimi.
 
 ```bash
@@ -43,7 +49,7 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-b --build`: Lokalizacja/katalog dla skompilowanych plików framework'u i projektu _(domyślnie: `build`)_. Bezpośrednio w tym folderze zostanie umieszczony końcowy plik wsadowy programu `.bin`/`.hex`.
 - `-m --memory`: Ilość pamięci FLASH w wykorzystywanej płytce. Nie należy ustawiać dla oficjalnie wspieranych konstrukcji. W przypadku konstrukcji niestandardowych należy wybrać `128kB` lub `512kB`, w zależności od użytego mikrokontrolera.
 - `-o --opt`: Poziom optymalizacji kodu dla kompilacji: `O0`, `Og`, `O1`, `O2`, `O3` _(default: `Og`)_
-- `-s --select`: Umożliwia przełączanie się między istniejącymi projektami. Gdy projekt zostanie utworzony, a następnie utworzymy nowy, powrót do pierwszego projektu polega na wywołaniu z tą flagą i podaniu jego nazwy.
+- `-s --select`: Umożliwia przełączanie się między istniejącymi projektami. Gdy projekt zostanie utworzony, a następnie utworzymy nowy, powrót do pierwszego projektu polega na wywołaniu z tą flagą i podaniu jego nazwy. W przypadku dodania nowego pliku do projektu konieczne jest odświeżenie - wystarczy użyć tej flagi bez podawania wartości.
 - `-d --develop`: Tryb developera. Tę flagę należy ustawić, gdy zamierzamy modyfikować pliki framework'u/bibliotek.
 - `-l --list`: Wyświetla listę istniejących projektów.
 - `-v --version`: Zwraca wersję programu 🧙🏼‍♂️**Wizard** oraz ścieżkę repozytorium.
