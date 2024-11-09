@@ -341,8 +341,7 @@ if not os.path.exists("./makefile"):
     folder = utils.replace_start(folder, pro, "$(PRO)")
     if utils.len_last_line(C_INCLUDES) > 80: C_INCLUDES += "\\\n"
     C_INCLUDES += "-I" + folder.replace("\\", "/").lstrip("./") + " "
-
-  create_file("makefile", sf.makefile, ".", {
+  replace_map = {
     "${NAME}": args.name,
     "${CTRL}": CTRL,
     "${FRAMEWORK}": fw.replace('\\', '\\\\').replace('/', '\\\\'),
@@ -350,12 +349,21 @@ if not os.path.exists("./makefile"):
     "${OPT}": args.opt,
     "${BUILD}": build,
     "${FAMILY}": FAMILY,
-    "${DEVELOP}": args.develop,
+    "${DEVELOP_WILDCARD}": args.develop,
+    "${DEVELOP_WILDCARD}": args.develop,
     "${C_SOURCES}": C_SOURCES,
     "${ASM_SOURCES}": ASM_SOURCES,
     "${C_INCLUDES}": C_INCLUDES,
     "${LD_FILE}": LD_FILE
-  })
+  }
+  if args.develop:
+    replace_map["${DEVELOP_CLEAN}"] = "\n\tif [ -d \"$(BUILD)\\\\$(FW)\" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(FW); fi && \\"
+    replace_map["${DEVELOP_WILDCARD}"] = "\n-include $(wildcard $(BUILD)/$(FW)/*.d)"
+  else:
+    replace_map["${DEVELOP_CLEAN}"] = ""
+    replace_map["${DEVELOP_WILDCARD}"] = ""
+    
+  create_file("makefile", sf.makefile, ".", replace_map)
   new_makefile = True
 
 else:

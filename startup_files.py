@@ -131,8 +131,7 @@ FW = ${FRAMEWORK}
 PRO = ${PROJECT}
 BUILD = ${BUILD}
 OPT = ${OPT}
-FAMILY = ${FAMILY} 
-DEVELOP = ${DEVELOP} 
+FAMILY = ${FAMILY}
 
 C_SOURCES = \\
 ${C_SOURCES}
@@ -222,10 +221,7 @@ earse:
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "init; halt; stm32g0x mass_erase 0; reset; exit"
 
 clean:
-	cmd /c del /q $(BUILD)\\\\$(TARGET).* && \\
-	ifeq ($(DEVELOP), True)
-		if [ -d "$(BUILD)\\\\$(FW)" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(FW); fi && \\
-	endif
+	cmd /c del /q $(BUILD)\\\\$(TARGET).* && \\${DEVELOP_CLEAN}
 	if [ -d "$(BUILD)\\\\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(PRO); fi
 
 clr: clean
@@ -235,10 +231,7 @@ clean_all:
 
 .PHONY: all build flash run earse clean clr clean_all
 
--include $(wildcard $(BUILD)/$(TARGET).d)
-ifeq ($(DEVELOP), True)
-  -include $(wildcard $(BUILD)/$(FW)/*.d)
-endif
+-include $(wildcard $(BUILD)/$(TARGET).d)${DEVELOP_WILDCARD}
 -include $(wildcard $(BUILD)/$(PRO)/*.d)
 """
 
