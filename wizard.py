@@ -9,6 +9,9 @@ parser = argparse.ArgumentParser(description="OpenPLC project wizard")
 parser.add_argument("-n", "--name", type=str, help="Nazwa projektu (default: app)", default="app")
 parser.add_argument("-c", "--controller", type=str, help="Model sterownika PLC {Uno|DIO|AIO|Eco|Custom|Void} (default: Uno)" , default="Uno")
 parser.add_argument("-f", "--framework", type=str, help="Lokalizacja framework'u OpenCPLC (default: opencplc)" , default="opencplc")
+# TODO: Możliwość pobrania wybranej wersji framework'u
+# parser.add_argument("-f", "--framework", nargs=2, metavar=("path", "version"),  default=["opencplc", "last"],
+#   help="Lokalizacja framework'u OpenCPLC (default: opencplc) oraz jego wersja (default: last)" )
 parser.add_argument("-p", "--project", type=str, help="Lokalizacja aktywnego projektu (default: projects/{name})" , default="")
 parser.add_argument("-b", "--build", type=str, help="Lokalizacja dla skompilowanych plików framework'u i projektu (default: build)", default="build")
 parser.add_argument("-m", "--memory", type=str, help="Ilość pamięci FLASH w wykorzystywanej płytce {128kB|512kB}", default="")
@@ -21,6 +24,8 @@ parser.add_argument("-i", "--info", action="store_true", help="Zwraca podstawowe
 parser.add_argument("-hl", "--hash", nargs="+", type=str, help="[Hash] Lista tagów do za-hash'owania")
 parser.add_argument("-ht", "--hash_title", type=str, help="[Hash] Tytół dla enum'a, który zostanie utworzony z listy hash'ów", default="")
 args = parser.parse_args()
+
+# TODO: framework_name, framework_version = args.framework
 
 class Color():
   BLUE = "\033[34m"
@@ -69,7 +74,7 @@ if args.list:
   exit_flag = True
 
 if args.version:
-  print(f"{Color.TEAL}Wizard{Color.END} OpenCPLC {Color.CYAN}1.0.0{Color.END}-rc.4")
+  print(f"{Color.TEAL}Wizard{Color.END} OpenCPLC {Color.CYAN}1.0.0-rc.4{Color.END}")
   print(f"Repo: {Color.CREAM}https://github.com/OpenCPLC/Wizard{Color.END}")
   exit_flag = True
 
@@ -80,25 +85,29 @@ def get_last_modification(dir:str="./"):
   return date
 
 if args.info:
-  lines = utils.read_makefile_lines("makefile")
+  lines = utils.read_lines("makefile", "#")
   info = utils.get_vars(lines, ["TARGET", "FW", "PRO", "BUILD", "OPT", "CTRL"])
   info["FW"] = info["FW"].replace("\\", "/")
   info["PRO"] = info["PRO"].replace("\\", "/")
   info["BUILD"] = info["BUILD"].replace("\\", "/")
+  opencplc_h = utils.read_lines(f"{info["FW"]}/plc/brd/opencplc.h", "//")
+  fw_version = utils.get_vars(opencplc_h, ["OPENCPLC_VERSION"], " ", "#define")["OPENCPLC_VERSION"]
+  print(fw_version)
   ctrl_define = {
     "STM32G0": "Void",
     "OPENCPLC_CUSTOM": "Custom",
-    "OPENCPLC_UNO": f"OpenCPLC {Color.CYAN}Uno{Color.END}",
-    "OPENCPLC_DIO": f"OpenCPLC {Color.CYAN}DIO{Color.END}",
-    "OPENCPLC_AIO": f"OpenCPLC {Color.CYAN}AIO{Color.END}",
-    "OPENCPLC_ECO": f"OpenCPLC {Color.CYAN}Eco{Color.END}"
+    "OPENCPLC_UNO": f"OpenCPLC {Color.BLUE}Uno{Color.END}",
+    "OPENCPLC_DIO": f"OpenCPLC {Color.BLUE}DIO{Color.END}",
+    "OPENCPLC_AIO": f"OpenCPLC {Color.BLUE}AIO{Color.END}",
+    "OPENCPLC_ECO": f"OpenCPLC {Color.BLUE}Eco{Color.END}"
   }
   print(f"{Color.TEAL}OpenCPLC{Color.END} project information:")
-  print(f"• Name {Color.GREY}-n{Color.END}: {Color.CYAN}{info["TARGET"]}{Color.END}")
+  print(f"• Name {Color.GREY}-n{Color.END}: {Color.BLUE}{info["TARGET"]}{Color.END}")
   ctrl = ctrl_define[info["CTRL"]] if info["CTRL"] in ctrl_define else f"{Color.RED}Not found{Color.END}"
   print(f"• Controller {Color.GREY}-c{Color.END}: {ctrl}")
   print(f"• Framework path {Color.GREY}-f{Color.END}: {Color.CREAM}{info["FW"]}{Color.END}")
-  print(f"• Workspace initialization: {get_last_modification(info["FW"])}")
+  print(f"• Framework version {Color.GREY}-f{Color.END}: OpenCPLC {Color.CYAN}{fw_version}{Color.END}")
+  print(f"• Framework update: {get_last_modification(info["FW"])}")
   print(f"• Project path {Color.GREY}-p{Color.END}: {Color.CREAM}{info["PRO"]}{Color.END}")
   print(f"• Project last modification: {get_last_modification(info["PRO"])}")
   print(f"• Build path {Color.GREY}-b{Color.END}: {Color.CREAM}{info["BUILD"]}{Color.END}")
@@ -119,7 +128,7 @@ def isyes():
 
 if args.select != None:
   if args.select == "":
-    lines = utils.read_makefile_lines("makefile")
+    lines = utils.read_lines("makefile", "#")
     args.select = utils.get_vars(lines, ["TARGET"])["TARGET"]
   KEY = args.select.lower()
   if KEY in data:

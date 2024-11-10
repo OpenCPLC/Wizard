@@ -119,33 +119,33 @@ class Env:
     except Exception as e:
       return False
     
-def read_makefile_lines(file_path):
+def read_lines(file_path: str, comment: str = "#"):
   lines = []
   with open(file_path, "r") as file:
     current_line = ""
     for line in file:
-      line = line.split("#", 1)[0].rstrip()
+      line = line.split(comment, 1)[0].rstrip()
       if line.endswith("\\"):
         current_line += line[:-1].rstrip()
       else:
         current_line += line
-        current_line = current_line.replace("\\\\", "\\")
         if current_line.strip():
-          lines.append(current_line)
+          lines.append(current_line.replace("\\\\", "\\"))
         current_line = ""
     if current_line.strip():
-      current_line = current_line.replace("\\\\", "\\")
-      lines.append(current_line)
+      lines.append(current_line.replace("\\\\", "\\"))
   return lines
 
-def get_vars(lines:list[str], prefix_list:list[str]):
-  lines = [s for s in lines if any(s.startswith(prefix) for prefix in prefix_list)]
-  vars = {}
-  pattern = r"^\s*(\w+)\s*=\s*(.*)"
-  for line in lines:
+def get_vars(lines: list[str], prefix_list: list[str], sep="=", trim_start:str="") -> dict:
+  if trim_start:
+    lines = [re.sub(f"^{re.escape(trim_start)}+", "", line).lstrip() for line in lines]
+  filtered_lines = [s for s in lines if any(s.startswith(prefix) for prefix in prefix_list)]
+  variables = {}
+  pattern = r"^\s*(\w+)\s*" + re.escape(sep) + r"\s*(.*)"
+  for line in filtered_lines:
     match = re.match(pattern, line)
     if match:
       key = match.group(1).strip()
-      value = match.group(2).strip()
-      vars[key] = value
-  return vars
+      value = match.group(2).strip().strip('"')
+      variables[key] = value
+  return variables
