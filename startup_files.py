@@ -326,8 +326,10 @@ settings_json = """
     "textMateRules": [
       { "scope": "variable.other.global.c", "settings": { "foreground": "#62CCDC" } },
       { "scope": "variable.other.local.c", "settings": { "foreground": "#9CDCFE" } },
-      { "scope": "variable.other", "settings": { "foreground": "#CCEDFE" } },
-      { "scope": "comment", "settings": { "foreground": "#777", "fontStyle": "italic" } }
+      { "scope": "variable.other", "settings": { "foreground": "#BCEDFE" } },
+      { "scope": "comment", "settings": { "foreground": "#777", "fontStyle": "italic" } },
+      { "scope": "entity.name.function.preprocessor", "settings": { "foreground": "#6CA0D0" } },
+      { "scope": "storage.modifier", "settings": { "foreground": "#9786c5" } }
     ]
   }
 }
@@ -370,7 +372,7 @@ static uint32_t stack_plc[256];
 // Stos pamięci dla wątku Debugera (bash + dbg + log)
 static uint32_t stack_dbg[256];
 // Stos pamięci dla funkcji loop
-static uint32_t stack_loop[256];
+static uint32_t stack_loop[1024];
 
 void loop(void)
 {
@@ -393,11 +395,11 @@ void loop(void)
 int main(void)
 {
   // Dodanie wątku sterownika
-  thread(&PLC_Thread, stack_plc, sizeof(stack_plc));
+  thread(&PLC_Thread, stack_plc, sizeof(stack_plc) / sizeof(uint32_t));
   // Dodanie wątku sterownika
-  thread(&DBG_Loop, stack_dbg, sizeof(stack_dbg));
+  thread(&DBG_Loop, stack_dbg, sizeof(stack_dbg) / sizeof(uint32_t));
   // Dodanie funkcji loop jako wątek
-  thread(&loop, stack_loop, sizeof(stack_loop));
+  thread(&loop, stack_loop, sizeof(stack_loop) / sizeof(uint32_t));
   // Włączenie systemy przełączania wątków VRTS
   VRTS_Init();
   // W to miejsce program nigdy nie powinien dojść
