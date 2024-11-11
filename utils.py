@@ -1,6 +1,5 @@
-import winreg, os, subprocess, codecs, json, glob, re
+import winreg, os, subprocess, codecs, json, re
 from datetime import datetime
-from typing import Callable
 
 def replace_start(text: str, find:str, replace:str):
   pattern = rf"(?m)^{re.escape(find)}\b"

@@ -367,6 +367,8 @@ main_c = """
 
 // Stos pamięci dla wątku PLC
 static uint32_t stack_plc[256];
+// Stos pamięci dla wątku Debugera (bash + dbg + log)
+static uint32_t stack_dbg[256];
 // Stos pamięci dla funkcji loop
 static uint32_t stack_loop[256];
 
@@ -392,6 +394,8 @@ int main(void)
 {
   // Dodanie wątku sterownika
   thread(&PLC_Thread, stack_plc, sizeof(stack_plc));
+  // Dodanie wątku sterownika
+  thread(&DBG_Loop, stack_dbg, sizeof(stack_dbg));
   // Dodanie funkcji loop jako wątek
   thread(&loop, stack_loop, sizeof(stack_loop));
   // Włączenie systemy przełączania wątków VRTS
