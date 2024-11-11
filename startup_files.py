@@ -326,9 +326,9 @@ settings_json = """
     "textMateRules": [
       { "scope": "variable.other.global.c", "settings": { "foreground": "#62CCDC" } },
       { "scope": "variable.other.local.c", "settings": { "foreground": "#9CDCFE" } },
-      { "scope": "variable.other", "settings": { "foreground": "#BCEDFE" } },
+      { "scope": "variable.other", "settings": { "foreground": "#ACEDFF" } },
       { "scope": "comment", "settings": { "foreground": "#777", "fontStyle": "italic" } },
-      { "scope": "entity.name.function.preprocessor", "settings": { "foreground": "#6CA0D0" } },
+      { "scope": "entity.name.function.preprocessor", "settings": { "foreground": "#68D" } },
       { "scope": "storage.modifier", "settings": { "foreground": "#9786c5" } }
     ]
   }
