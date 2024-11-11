@@ -182,7 +182,7 @@ DEVICE = { "128kB": "STM32G081RB", "512kB": "STM32G0C1RE" }[args.memory]
 SVD = { "128kB": "stm32g081.svd", "512kB": "stm32g0C1.svd" }[args.memory]
 FLASH = { "128kB": 128, "512kB": 512 }[args.memory]
 RAM = { "128kB": 36, "512kB": 144 }[args.memory]
-FREQ = 16000000 if args.controller in ["eco", "void"] else 18432000
+FREQ = 64000000 if args.controller in ["eco", "void"] else 59904000
 
 if args.controller == "void": FLASH -= 4
 elif args.controller == "eco": FLASH -= 12

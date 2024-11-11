@@ -22,6 +22,13 @@ Gdy będziemy mieli więcej projektów, będziemy mogli swobodnie przełączać 
 ./wizard.exe -s blinky
 ```
 
+Aby pobrać i dodać istniejący projekt, należy postępować tak samo jak przy tworzeniu nowego projektu. Wystarczy wskazać poprawną ścieżkę do istniejącego projektu.
+
+```bash
+./wizard.exe -n <existing_project_name> -c <controller> -p <existing_project_path>
+./wizard.exe -n stolen-project -c Uno -p projects/stolen
+```
+
 ### 🤔 How works?
 
 W pierwszej kolejności **Wizard** zainstaluje **GNU Arm Embedded Toolchain**, **OpenOCD**, **Make**, klienta **Git** oraz ustawi odpowiednio zmienne systemowe, jeżeli aplikacje nie są widoczne w systemie z poziomu konsoli. Jeżeli nie chcemy, aby ktoś grzebał w naszym systemie, możemy przygotować sobie [konfiguracje ręcznie](self-installed.md)
