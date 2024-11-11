@@ -228,11 +228,11 @@ extensions_json = """
 main_h = """
 /**
  * @file  main.h
- * @brief W tym pliku należy umieścić parametry konfiguracyjne `#define`, które chce się nadpisać.
- *        Wiele z bibliotek OpenCPLC załącza ten plik `#include`, zatem musi on istnieć, nawet jeśli będzie pusty.
+ * @brief W tym pliku należy umieścić parametry konfiguracyjne '#define', które chce się nadpisać.
+ *        Wiele z bibliotek OpenCPLC załącza ten plik '#include', zatem musi on istnieć, nawet jeśli będzie pusty.
  *        Dzięki takiemu rozwiązaniu można nadpisać różnego rodzaju definicje (zmienne) konfiguracyjne.
  *        Biblioteki OpenCPLC w pierwszej kolejności będą pobierały zawarte tutaj zmienne,
- *        zamiast korzystać z domyślnych wartości zawartych we własnych plikach nagłówkowych `.h`.
+ *        zamiast korzystać z domyślnych wartości zawartych we własnych plikach nagłówkowych '.h'.
  * @date  ${DATE}
  */
 
@@ -272,7 +272,7 @@ int main(void)
 {
   // Dodanie wątku sterownika
   thread(&PLC_Thread, stack_plc, sizeof(stack_plc) / sizeof(uint32_t));
-  // Dodanie wątku sterownika
+  // Dodanie wątku debuger'a (bash + dbg + log)
   thread(&DBG_Loop, stack_dbg, sizeof(stack_dbg) / sizeof(uint32_t));
   // Dodanie funkcji loop jako wątek
   thread(&loop, stack_loop, sizeof(stack_loop) / sizeof(uint32_t));
