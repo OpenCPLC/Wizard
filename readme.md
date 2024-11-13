@@ -57,7 +57,6 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-m --memory`: Ilość pamięci FLASH w wykorzystywanej płytce. Nie należy ustawiać dla oficjalnie wspieranych konstrukcji. W przypadku konstrukcji niestandardowych należy wybrać `128kB` lub `512kB`, w zależności od użytego mikrokontrolera.
 - `-o --opt`: Poziom optymalizacji kodu dla kompilacji: `O0`, `Og`, `O1`, `O2`, `O3` _(default: `Og`)_
 - `-s --select`: Umożliwia przełączanie się między istniejącymi projektami. Gdy projekt zostanie utworzony, a następnie utworzymy nowy, powrót do pierwszego projektu polega na wywołaniu z tą flagą i podaniu jego nazwy. W przypadku dodania nowego pliku do projektu konieczne jest odświeżenie - wystarczy użyć tej flagi bez podawania wartości.
-- `-d --develop`: Tryb developera. Tę flagę należy ustawić, gdy zamierzamy modyfikować pliki framework'u/bibliotek.
 - `-l --list`: Wyświetla listę istniejących projektów.
 - `-v --version`: Zwraca wersję programu 🧙🏼‍♂️**Wizard** oraz ścieżkę repozytorium.
 - `-i --info`: Zwraca podstawowe informacje o bieżącym projekcie, czyli tym, nad którym aktualnie pracujesz. Dla tego projektu jest przygotowywany plik `makefile`, a polecenie `make` będzie z nim współpracować.

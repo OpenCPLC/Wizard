@@ -94,7 +94,8 @@ earse4real:
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "init; halt; stm32g0x mass_erase 0; reset; exit"
 
 clean:
-	cmd /c del /q $(BUILD)\\$(TARGET).* && \\${DEVELOP_CLEAN}
+	cmd /c del /q $(BUILD)\\$(TARGET).* && \\
+	if [ -d \"$(BUILD)\\\\$(FW)\" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(FW); fi && \\
 	if [ -d "$(BUILD)\\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(PRO); fi
 
 clean2much:
@@ -108,7 +109,8 @@ clear2much: clean2much
 
 .PHONY: all flash earse earse4real clean clean2much build run clr clear clear2much
 
--include $(wildcard $(BUILD)/$(TARGET).d)${DEVELOP_WILDCARD}
+-include $(wildcard $(BUILD)/$(TARGET).d)
+-include $(wildcard $(BUILD)/$(FW)/*.d)
 -include $(wildcard $(BUILD)/$(PRO)/*.d)
 """
 

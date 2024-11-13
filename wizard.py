@@ -9,23 +9,18 @@ parser = argparse.ArgumentParser(description="OpenPLC project wizard")
 parser.add_argument("-n", "--name", type=str, help="Nazwa projektu (default: app)", default="app")
 parser.add_argument("-c", "--controller", type=str, help="Model sterownika PLC {Uno|DIO|AIO|Eco|Custom|Void} (default: Uno)" , default="Uno")
 parser.add_argument("-f", "--framework", type=str, help="Lokalizacja framework'u OpenCPLC (default: opencplc)" , default="opencplc")
-# TODO: Możliwość pobrania wybranej wersji framework'u
-# parser.add_argument("-f", "--framework", nargs=2, metavar=("path", "version"),  default=["opencplc", "last"],
-#   help="Lokalizacja framework'u OpenCPLC (default: opencplc) oraz jego wersja (default: last)" )
+parser.add_argument("-fv", "--framework-version", type=str, nargs="?", help="Wersja framework'u OpenCPLC (default: latest)", const=None, default="latest")
 parser.add_argument("-p", "--project", type=str, help="Lokalizacja aktywnego projektu (default: projects/{name})" , default="")
 parser.add_argument("-b", "--build", type=str, help="Lokalizacja dla skompilowanych plików framework'u i projektu (default: build)", default="build")
 parser.add_argument("-m", "--memory", type=str, help="Ilość pamięci FLASH w wykorzystywanej płytce {128kB|512kB}", default="")
 parser.add_argument("-o", "--opt", type=str, help="Poziom optymalizacji kompilacji {O0, Og, O1, O2, O3} (default: Og)", default="Og")
 parser.add_argument("-s", "--select", type=str, nargs="?", help="Umożliwia przełączanie się między istniejącymi projektami", const="", default=None)
-parser.add_argument("-d", "--develop", action="store_true", help="Tryb developera (należy ustawić, gdy modyfikuje się framework)", default=False)
 parser.add_argument("-l", "--list", action="store_true", help="Wyświetla listę istniejących projektów", default=False)
 parser.add_argument("-v", "--version", action="store_true", help="Wersję programu 'wizard' oraz inne informacje", default=False)
 parser.add_argument("-i", "--info", action="store_true", help="Zwraca podstawowe informacje o bieżącym projekcie", default=False)
 parser.add_argument("-hl", "--hash", nargs="+", type=str, help="[Hash] Lista tagów do za-hash'owania")
 parser.add_argument("-ht", "--hash_title", type=str, help="[Hash] Tytół dla enum'a, który zostanie utworzony z listy hash'ów", default="")
 args = parser.parse_args()
-
-# TODO: framework_name, framework_version = args.framework
 
 class Color():
   BLUE = "\033[34m"
@@ -56,6 +51,17 @@ if not args.project:
   args.project = f"projects/{args.name}"
 
 exit_flag = False
+
+if args.framework_version is None:
+  versions = ["1.0.2", "1.0.1", "1.0.0"]
+  msg = f"Framework Versions: "
+  latest = " (latest)"
+  for ver in versions:
+    msg += f"{Color.CYAN}{ver}{Color.END}{latest}, "
+    latest = ""
+  msg = msg.rstrip(", ")
+  print(msg)
+  exit_flag = True
 
 if args.list:
   msg = f"Projects: "
@@ -248,6 +254,8 @@ if reset_console:
 
 if not os.path.exists(args.framework):
   os.makedirs(args.framework)
+  # TODO: Pobierz framework w wskazanej wersji args.framework_version
+  # TODO: Jakoś trzeba powiązać wersje z projektem ???
   if not utils.clone_repo(BASE_REPO, args.framework):
     print(f"{ERR} Próba sklonowania repozytorium {Color.CREAM}{BASE_REPO}{Color.END} nie powiodła się")
   if args.controller == "void":
@@ -349,7 +357,7 @@ if not os.path.exists("./makefile"):
     folder = utils.replace_start(folder, pro, "$(PRO)")
     if utils.len_last_line(C_INCLUDES) > 80: C_INCLUDES += "\\\n"
     C_INCLUDES += "-I" + folder.replace("\\", "/").lstrip("./") + " "
-  replace_map = {
+  create_file("makefile", sf.makefile, ".", {
     "${NAME}": args.name,
     "${CTRL}": CTRL,
     "${FRAMEWORK}": fw.replace('\\', '\\\\').replace('/', '\\\\'),
@@ -357,21 +365,11 @@ if not os.path.exists("./makefile"):
     "${OPT}": args.opt,
     "${BUILD}": build,
     "${FAMILY}": FAMILY,
-    "${DEVELOP_WILDCARD}": args.develop,
-    "${DEVELOP_WILDCARD}": args.develop,
     "${C_SOURCES}": C_SOURCES,
     "${ASM_SOURCES}": ASM_SOURCES,
     "${C_INCLUDES}": C_INCLUDES,
     "${LD_FILE}": LD_FILE
-  }
-  if args.develop:
-    replace_map["${DEVELOP_CLEAN}"] = "\n\tif [ -d \"$(BUILD)\\\\$(FW)\" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(FW); fi && \\"
-    replace_map["${DEVELOP_WILDCARD}"] = "\n-include $(wildcard $(BUILD)/$(FW)/*.d)"
-  else:
-    replace_map["${DEVELOP_CLEAN}"] = ""
-    replace_map["${DEVELOP_WILDCARD}"] = ""
-    
-  create_file("makefile", sf.makefile, ".", replace_map)
+  })
   new_makefile = True
 
 else:
