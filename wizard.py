@@ -98,7 +98,6 @@ if args.info:
   info["BUILD"] = info["BUILD"].replace("\\", "/")
   opencplc_h = utils.read_lines(f"{info["FW"]}/plc/brd/opencplc.h", "//")
   fw_version = utils.get_vars(opencplc_h, ["OPENCPLC_VERSION"], " ", "#define")["OPENCPLC_VERSION"]
-  print(fw_version)
   ctrl_define = {
     "STM32G0": "Void",
     "OPENCPLC_CUSTOM": "Custom",
