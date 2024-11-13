@@ -257,10 +257,10 @@ if not os.path.exists(args.framework):
   # TODO: Jakoś trzeba powiązać wersje z projektem ???
   if not utils.clone_repo(BASE_REPO, args.framework):
     print(f"{ERR} Próba sklonowania repozytorium {Color.CREAM}{BASE_REPO}{Color.END} nie powiodła się")
-  if args.controller == "void":
-    utils.folder_remove(f"{args.framework}/res")
-    utils.folder_remove(f"{args.framework}/plc")
-    os.remove(f"{args.framework}/readme.md")
+  # if args.controller == "void":
+  #   utils.folder_remove(f"{args.framework}/res")
+  #   utils.folder_remove(f"{args.framework}/plc")
+  #   os.remove(f"{args.framework}/readme.md")
   print(f"{OK} Repozytorium {Color.CREAM}{BASE_REPO}{Color.END} zostało sklonowane")
 
 if not os.path.exists(args.project):

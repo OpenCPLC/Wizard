@@ -52,6 +52,7 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
   - `Custom` - dla konstrukcji niestandardowej w ramach frameworku **OpenCPLC**
   - `Void` - dla projektu **STM32** pozbawionego warstwy abstrakcji dedykowanej sterownikom PLC
 - `-f --framework`: Lokalizacja/folder dla framework'u/bibliotek _(domyślnie: `opencplc`)_. Pliki w tym folderze zostaną wykorzystane podczas kompilacji i będą traktowane przez **VSCode** jako część projektu.
+- `-fv --framework-version`: Wersja framework'u/bibliotek, która zostanie pobrana _(domyślnie: `latest`)_. Brak ustawienia tej flagi spowoduje pobranie najnowszej stabilnej wersji. Można pobrać wersję deweloperską _(w fazie testów)_, ustawiając `dev`. Ustawienie flagi bez podania wersji spowoduje wyświetlenie listy dostępnych wersji.
 - `-p --project`: Lokalizacja/folder aktywnego projektu. Domyślnie zostanie utworzony folder `projects`, a w nim folder projektu o nazwie `--name`. Pliki w tym folderze zostaną wykorzystane podczas kompilacji i będą traktowane przez **VSCode** jako część projektu.
 - `-b --build`: Lokalizacja/katalog dla skompilowanych plików framework'u i projektu _(domyślnie: `build`)_. Bezpośrednio w tym folderze zostanie umieszczony końcowy plik wsadowy programu `.bin`/`.hex`.
 - `-m --memory`: Ilość pamięci FLASH w wykorzystywanej płytce. Nie należy ustawiać dla oficjalnie wspieranych konstrukcji. W przypadku konstrukcji niestandardowych należy wybrać `128kB` lub `512kB`, w zależności od użytego mikrokontrolera.
