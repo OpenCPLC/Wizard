@@ -83,7 +83,7 @@ Zawiera zestaw instrukcji **Make** przygotowany w pliku `makefile`:
 
 Użycie `erase_real` **_(erase full chip)_** powoduje zawieszenie mikrokontrolera. Aby przywrócić jego działanie, należy wgrać dowolny działający program za pomocą instrukcji `make flash` lub `make erase`, a następnie odłączyć zasilanie i ponownie je podłączyć po kilku sekundach.
 
-#### 💼 Workspace Management
+## 💼 Workspace Management
 
 Sposób organizacji przestrzeni roboczej zależy od liczby projektów i wielkości organizacji. Domyślnie zakładamy, że pracujesz sam lub w małym zespole. Wówczas najlepiej sprawdzi się struktura katalogów:
 
