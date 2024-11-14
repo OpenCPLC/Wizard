@@ -84,30 +84,30 @@ $(BUILD)/%.bin: $(BUILD)/%.elf | $(dir $(BUILD)/%)
 $(dir $(BUILD)/%):
 	mkdir -p $@
 
-flash: all
+build: all
+
+flash:
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "program $(BUILD)/$(TARGET).elf verify reset exit"
+
+run: all flash
+
+clean:
+	cmd /c del /q $(BUILD)\$(TARGET).* && \
+	if [ -d "$(BUILD)\\$(FW)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(FW); fi && \
+	if [ -d "$(BUILD)\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\$(PRO); fi
+
+clr: clean
+
+clean_all:
+	if [ -d "$(BUILD)" ]; then cmd /c rmdir /s /q $(BUILD); fi
 
 earse:
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "program $(FW)/res/earse.hex verify reset exit"
 
-earse4real:
+earse_real:
 	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "init; halt; stm32g0x mass_erase 0; reset; exit"
 
-clean:
-	cmd /c del /q $(BUILD)\\$(TARGET).* && \\
-	if [ -d \"$(BUILD)\\\\$(FW)\" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(FW); fi && \\
-	if [ -d "$(BUILD)\\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(PRO); fi
-
-clean2much:
-	if [ -d "$(BUILD)" ]; then cmd /c rmdir /s /q $(BUILD); fi
-
-build: all
-run: flash
-clr: clean
-clear: clean
-clear2much: clean2much
-
-.PHONY: all flash earse earse4real clean clean2much build run clr clear clear2much
+.PHONY: all build flash run clean clr clean_all earse earse_real
 
 -include $(wildcard $(BUILD)/$(TARGET).d)
 -include $(wildcard $(BUILD)/$(FW)/*.d)

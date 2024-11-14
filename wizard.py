@@ -16,6 +16,13 @@ parser.add_argument("-m", "--memory", type=str, help="Ilość pamięci FLASH w w
 parser.add_argument("-o", "--opt", type=str, help="Poziom optymalizacji kompilacji {O0, Og, O1, O2, O3} (default: Og)", default="Og")
 parser.add_argument("-s", "--select", type=str, nargs="?", help="Umożliwia przełączanie się między istniejącymi projektami", const="", default=None)
 parser.add_argument("-l", "--list", action="store_true", help="Wyświetla listę istniejących projektów", default=False)
+
+# TODO: -e --edit -n ... -p ... -f -c ...   pozwala na zmianę parametrów w proejcie
+# -c -m wymaga edycji pliku flash
+# -fv wymage edycji pliku .h
+
+# -y zawsze yes
+
 parser.add_argument("-v", "--version", action="store_true", help="Wersję programu 'wizard' oraz inne informacje", default=False)
 parser.add_argument("-i", "--info", action="store_true", help="Zwraca podstawowe informacje o bieżącym projekcie", default=False)
 parser.add_argument("-hl", "--hash", nargs="+", type=str, help="[Hash] Lista tagów do za-hash'owania")

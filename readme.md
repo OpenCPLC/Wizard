@@ -61,3 +61,90 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-l --list`: Wyświetla listę istniejących projektów.
 - `-v --version`: Zwraca wersję programu 🧙🏼‍♂️**Wizard** oraz ścieżkę repozytorium.
 - `-i --info`: Zwraca podstawowe informacje o bieżącym projekcie, czyli tym, nad którym aktualnie pracujesz. Dla tego projektu jest przygotowywany plik `makefile`, a polecenie `make` będzie z nim współpracować.
+
+## ✨ Make
+
+Aby zbudować program i wgrać go na sterownik PLC _(mikrokontroler)_, wystarczy otworzyć konsolę w przestrzeni roboczej _(tam, gdzie pracowaliśmy z wizard.exe)_ i wpisać:
+
+```bash
+make build # build c projekt to binary program
+make flash # move binary fole to PLC (micorcotroler) memeory
+```
+
+Zawiera zestaw instrukcji **Make** przygotowany w pliku `makefile`:
+
+- **`make build`** lub samo **`make`**: Buduje projekt w języku C do postaci plików wsadowych `.bin`, `.hex`, `.elf`
+- **`make flash`**: Wgrywa plik wsadowy programu do pamięci sterownika PLC _(mikrokontrolera)_
+- **`make run`**: Wykonuje `make build`, a następnie `make flash`
+- **`make clean`** lub `make clr`: Usuwa zbudowane pliki wsadowe dla aktywnego projektu
+- `make clean_all`: Usuwa zbudowane pliki wsadowe dla wszystkich projektów
+- **`make erase`**: Wgrywa pusty program na sterownik mikrokontrolera
+- `make erase_real`: Całkowicie czyści pamięć mikrokontrolera
+
+Użycie `erase_real` **_(erase full chip)_** powoduje zawieszenie mikrokontrolera. Aby przywrócić jego działanie, należy wgrać dowolny działający program za pomocą instrukcji `make flash` lub `make erase`, a następnie odłączyć zasilanie i ponownie je podłączyć po kilku sekundach.
+
+#### 💼 Workspace Management
+
+Sposób organizacji przestrzeni roboczej zależy od liczby projektów i wielkości organizacji. Domyślnie zakładamy, że pracujesz sam lub w małym zespole. Wówczas najlepiej sprawdzi się struktura katalogów:
+
+- Workspace folder `./`:
+  - Framework: `./opencplc/`
+  - Projekty: `./projects/`
+    - Projekt **1**: `./projects/<pro1_name>/`
+    - Projekt **2**: `./projects/<pro2_name>/`
+    - Projekt **3**: `./projects/<pro3_name>/`
+
+Jest to domyślna struktura, więc tworząc nowy projekt, wystarczy wywołać z konsoli:
+
+```bash
+./wizard.exe -n <new_project_name> -c <controller>
+```
+
+Gdy planujemy większą liczbę projektów, warto je pogrupować, tematycznie lub według klientów:
+
+- Workspace folder `./`:
+  - Framework: `./opencplc/`
+  - Projekty: `./projects/`
+    - Grupa **A**: `./projects/<group_a_name>/`
+      - Projekt **A1**: `./projects/<group_a_name>/<pro_a1_name>/`
+      - Projekt **A2**: `./projects/<group_a_name>/<pro_a2_name>/`
+    - Grupa **B**: `./projects/<group_b_name>/`
+      - Projekt **B1**: `./projects/<group_b_name>/<pro_b1_name>/`
+
+Wówczas przy uruchomieniu wizard'a trzeba przekazać ścieżkę do projektu za pomocą flagi `-p`:
+
+```bash
+./wizard.exe -n <new_project_name> -c <controller> -p projects/<group_name>/<pro_name>
+```
+
+Jeśli prowadzimy tylko jeden większy projekt i nie planujemy więcej, można wykorzystać płaską strukturę, gdzie wszystkie katalogi będą w jednym folderze projektu:
+
+- Project folder `./`
+- Framework folder: `./`
+
+Wówczas przy uruchomieniu wizard'a trzeba przekazać ścieżkę do projektu `-p` i zmienić ścieżkę framework'u za pomocą `-f`:
+
+```bash
+./wizard.exe -n <new_project_name> -c <controller> -p ./ -f ./
+```
+
+W przypadku pracy w dużej firmie z licznymi projektami nie ma sensu przechowywać wszystkich projektów w jednym workspace; konieczne jest ich wersjonowanie, ponieważ aktualizacje frameworku mogą powodować błędy w aplikacjach, których może zabraknąć czasu na szybkie poprawienie. Przy pracy nad wieloma projektami z innymi deweloperami warto mieć osobny folder dla każdej używanej **wersji OpenCPLC**, co pozwala rozwijać każdy projekt w odpowiedniej wersji, a aktualizację do nowszej wersji przeprowadzać wtedy, gdy będzie to konieczne lub możliwe czasowo.
+
+- Workspace folder `./`:
+  - Framework: `./opencplc/`
+    - Wersja **1.2.0-rc.3**: `./opencplc/1.2.0-rc.3/`
+    - Wersja **1.1.7**: `./opencplc/1.1.7/`
+    - Wersja **1.0.2**: `./opencplc/1.0.2/`
+  - Projekty: `./projects/`
+    - Projekt **1**: `./projects/<pro1_name>/`
+    - Projekt **2**: `./projects/<pro2_name>/`
+    - Projekt **3**: `./projects/<pro3_name>/`
+    - Projekt **4**: `./projects/<pro4_name>/`
+
+Wówczas przy uruchomieniu wizard'a warto mieć kontrolę nad wersją, na której pracujemy:
+
+```bash
+./wizard.exe -n <new_project_name> -c <controller> -f <framework_path> -fv <opencplc_version>
+```
+
+Gdy wersja framework'u się nie zgadza, wizard poinformuje nas o tym. Informacje o wymaganej wersji framework'u OpenCPLC przechowuje definicja **`PRO_OPENCPLC_VERSION`** w pliku `main.h`.
