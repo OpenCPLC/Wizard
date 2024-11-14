@@ -16,13 +16,10 @@ parser.add_argument("-m", "--memory", type=str, help="Ilość pamięci FLASH w w
 parser.add_argument("-o", "--opt", type=str, help="Poziom optymalizacji kompilacji {O0, Og, O1, O2, O3} (default: Og)", default="Og")
 parser.add_argument("-s", "--select", type=str, nargs="?", help="Umożliwia przełączanie się między istniejącymi projektami", const="", default=None)
 parser.add_argument("-l", "--list", action="store_true", help="Wyświetla listę istniejących projektów", default=False)
-
-# TODO: -e --edit -n ... -p ... -f -c ...   pozwala na zmianę parametrów w proejcie
-# -c -m wymaga edycji pliku flash
-# -fv wymage edycji pliku .h
-
-# -y zawsze yes
-
+# TODO: Dodanie flagi: -e --edit -n ... -p ... -f -c ... umożliwia zmianę parametrów w projekcie
+# -c i -m wymagają edycji pliku flash
+# -fv wymaga edycji pliku .h
+# TODO: Dodanie flagi: -y --yes automatycznie potwierdza wszystkie akcje
 parser.add_argument("-v", "--version", action="store_true", help="Wersję programu 'wizard' oraz inne informacje", default=False)
 parser.add_argument("-i", "--info", action="store_true", help="Zwraca podstawowe informacje o bieżącym projekcie", default=False)
 parser.add_argument("-hl", "--hash", nargs="+", type=str, help="[Hash] Lista tagów do za-hash'owania")
@@ -261,7 +258,6 @@ if reset_console:
 if not os.path.exists(args.framework):
   os.makedirs(args.framework)
   # TODO: Pobierz framework w wskazanej wersji args.framework_version
-  # TODO: Jakoś trzeba powiązać wersje z projektem ???
   if not utils.clone_repo(BASE_REPO, args.framework):
     print(f"{ERR} Próba sklonowania repozytorium {Color.CREAM}{BASE_REPO}{Color.END} nie powiodła się")
   # if args.controller == "void":
@@ -269,6 +265,10 @@ if not os.path.exists(args.framework):
   #   utils.folder_remove(f"{args.framework}/plc")
   #   os.remove(f"{args.framework}/readme.md")
   print(f"{OK} Repozytorium {Color.CREAM}{BASE_REPO}{Color.END} zostało sklonowane")
+else:
+  pass
+  # TODO: Jeśli folder z framework'iem istnieje, sprawdź jego wersję
+  # TODO: W przypadku konfliktu zgłoś błąd
 
 if not os.path.exists(args.project):
   os.makedirs(args.project)
@@ -285,6 +285,11 @@ if not any(os.path.basename(file) == "main.h" for files in head.values() for fil
     "${DATE}": utils.get_date(),
     "${FREQ}": str(FREQ)
   })
+  # TODO: Dla wersji różnej od 'dev'|'develop' utwórz #define PRO_OPENCPLC_VERSION
+else:
+  pass
+  # TODO: Jeżeli istnieje, porównaj z wersją frameworka.
+  # TODO: W przypadku konfliktu zgłoś błąd
 
 INC = args.framework + "/inc"
 LIB = args.framework + "/lib"
