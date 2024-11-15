@@ -148,3 +148,36 @@ def get_vars(lines: list[str], prefix_list: list[str], sep="=", trim_start:str="
       value = match.group(2).strip().strip('"')
       variables[key] = value
   return variables
+
+def line_remove(text:str, phrase:str, limit:int=1) -> str:
+  lines = text.splitlines()
+  result = []
+  count = 0
+  for line in lines:
+    if phrase in line and count < limit: count += 1
+    else: result.append(line)
+  return "\n".join(result)
+
+def line_replace(text:str, phrase:str, new_content:str, limit:int=1) -> str:
+  lines = text.splitlines()
+  result = []
+  count = 0
+  for line in lines:
+    if phrase in line and count < limit:
+      indent = len(line) - len(line.lstrip())
+      new_line = " " * indent + new_content
+      result.append(new_line)
+      count += 1
+    else:
+      result.append(line)
+  return "\n".join(result)
+
+def line_add_before(text: str, phrase:str, new_line:str, limit:int=1) -> str:
+  lines = text.splitlines()
+  result = []
+  count = 0
+  for line in lines:
+    if phrase in line and count < limit:
+      result.append(new_line)
+    result.append(line)
+  return "\n".join(result)

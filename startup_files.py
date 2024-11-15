@@ -4,7 +4,6 @@ CTRL = ${CTRL}
 FW = ${FRAMEWORK}
 PRO = ${PROJECT}
 BUILD = ${BUILD}
-OPT = ${OPT}
 FAMILY = ${FAMILY}
 
 C_SOURCES = \\
@@ -30,9 +29,10 @@ HEX = $(CP) -O ihex
 BIN = $(CP) -O binary -S
  
 CPU = -mcpu=cortex-m0plus
+# CPU = -mcpu=cortex-m4
 
-# MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI) # Floating point numbers
 MCU = $(CPU) -mthumb
+# MCU = $(CPU) -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard  # Floating point numbers
 AS_DEFS = -D$(FAMILY) -D$(CTRL)
 C_DEFS = -D$(FAMILY) -D$(CTRL)
 
@@ -41,14 +41,12 @@ ASM_INCLUDES =
 C_INCLUDES = \\
 ${C_INCLUDES}
 
-ASFLAGS = $(MCU) $(AS_DEFS) $(ASM_INCLUDES) -$(OPT) -Wall -fdata-sections -ffunction-sections
-CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) -$(OPT) -Wall -fdata-sections -ffunction-sections
+ASFLAGS = $(MCU) $(AS_DEFS) $(ASM_INCLUDES) -O0 -Wall -fdata-sections -ffunction-sections
+CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) -O0 -Wall -fdata-sections -ffunction-sections
 CFLAGS += -g -gdwarf-2 # DEBUG
 CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
-CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
-
-LDSCRIPT = ${LD_FILE}
+LDSCRIPT = $(PRO)/${LD_FILE}
 
 LIBS = -lc -lm -lnosys
 LIBDIR = 
@@ -84,17 +82,19 @@ $(BUILD)/%.bin: $(BUILD)/%.elf | $(dir $(BUILD)/%)
 $(dir $(BUILD)/%):
 	mkdir -p $@
 
+OPENOCD = openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c
+
 build: all
 
 flash:
-	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "program $(BUILD)/$(TARGET).elf verify reset exit"
+	$(OPENOCD) "program $(BUILD)/$(TARGET).elf verify reset exit"
 
 run: all flash
 
 clean:
-	cmd /c del /q $(BUILD)\$(TARGET).* && \
-	if [ -d "$(BUILD)\\$(FW)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(FW); fi && \
-	if [ -d "$(BUILD)\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\$(PRO); fi
+	cmd /c del /q $(BUILD)\$(TARGET).* && \\
+	if [ -d "$(BUILD)\\$(FW)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(FW); fi && \\
+	if [ -d "$(BUILD)\\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(PRO); fi
 
 clr: clean
 
@@ -102,10 +102,10 @@ clean_all:
 	if [ -d "$(BUILD)" ]; then cmd /c rmdir /s /q $(BUILD); fi
 
 earse:
-	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "program $(FW)/res/earse.hex verify reset exit"
+	$(OPENOCD) -c "program $(FW)/res/earse.hex verify reset exit"
 
 earse_real:
-	openocd -f interface/stlink.cfg -f target/stm32g0x.cfg -c "init; halt; stm32g0x mass_erase 0; reset; exit"
+	$(OPENOCD) -c "init; halt; stm32g0x mass_erase 0; reset; exit"
 
 .PHONY: all build flash run clean clr clean_all earse earse_real
 
@@ -277,6 +277,83 @@ int main(void)
 {
   // Dodanie wątku sterownika
   thread(&PLC_Thread, stack_plc, sizeof(stack_plc) / sizeof(uint32_t));
+  // Dodanie wątku debuger'a (bash + dbg + log)
+  thread(&DBG_Loop, stack_dbg, sizeof(stack_dbg) / sizeof(uint32_t));
+  // Dodanie funkcji loop jako wątek
+  thread(&loop, stack_loop, sizeof(stack_loop) / sizeof(uint32_t));
+  // Włączenie systemy przełączania wątków VRTS
+  VRTS_Init();
+  // W to miejsce program nigdy nie powinien dojść
+  while(1);
+}
+"""
+
+main_c_void = """
+
+// Import bibliotek
+#include "rtc.h"
+#include "sys.h"
+#include "vrts.h"
+#include "dbg.h"
+
+// Stos pamięci dla wątku Debugera (bash + dbg + log)
+static uint32_t stack_dbg[256];
+// Stos pamięci dla funkcji loop
+static uint32_t stack_loop[1024];
+
+//------------------------------------------------------------------------------------------------- dbg
+
+uint8_t dbg_buff_buffer[2048];
+BUFF_t dbg_buff = {
+  .mem = dbg_buff_buffer,
+  .size = sizeof(dbg_buff_buffer),
+  .console_mode = true,
+  .Echo = DBG_Char,
+  .Enter = DBG_Enter,
+};
+UART_t dbg_uart = {
+  .reg = USART1,
+  .tx_pin = UART1_TX_PA9,
+  .rx_pin = UART1_RX_PA10,
+  .dma_channel = DMA_Channel_4,
+  .interrupt_level = INT_Level_Low,
+  .UART_115200,
+  .buff = &dbg_buff
+};
+uint8_t dbg_file_buffer[2048];
+FILE_t dbg_file = { 
+  .name = "debug",
+  .buffer = dbg_file_buffer,
+  .limit = sizeof(dbg_file_buffer)
+};
+
+//------------------------------------------------------------------------------------------------- app
+
+GPIO_t led = { // Nucleo LED
+  .port = GPIOA,
+  .pin = 5,
+  .mode = GPIO_Mode_Output
+}; 
+
+void loop(void)
+{
+  while(1) {
+    GPIO_Tgl(&led); // Zmiana stanu diody
+    LOG_Info("Do nothing"); // Wyświetl wiadomość w pętli
+    delay(1000); // Odczekaj 1s
+  }
+}
+
+//------------------------------------------------------------------------------------------------- main
+
+int main(void)
+{
+  SYS_Clock_Init(); // Konfiguracja systemowego sygnału zegarowego
+  RTC_Init(); // Włączenie zegara czasu rzeczywistego (RTC)
+  SYSTICK_Init(10); // Uruchomienie zegara systemowego z dokładnością do 10ms
+  DBG_Init(&dbg_uart, &dbg_file); // Inicjalizacja debuger'a (bash + dbg + log)
+  LOG_Info("Hello ${FAMILY} template project"); // Wyświetl wiadomość startową
+  GPIO_Init(&led); // Inicjalizacja diody LED
   // Dodanie wątku debuger'a (bash + dbg + log)
   thread(&DBG_Loop, stack_dbg, sizeof(stack_dbg) / sizeof(uint32_t));
   // Dodanie funkcji loop jako wątek

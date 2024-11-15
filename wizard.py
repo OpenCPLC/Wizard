@@ -2,9 +2,6 @@ import os, sys, io, argparse
 import urllib.request, zipfile
 import startup_files as sf, utils
 
-# pip install -U pyinstaller
-# pyinstaller --onefile --workpath wizard-build --distpath ./wizard-dist --icon=logo.ico wizard.py
-
 parser = argparse.ArgumentParser(description="OpenPLC project wizard")
 parser.add_argument("-n", "--name", type=str, help="Nazwa projektu (default: app)", default="app")
 parser.add_argument("-c", "--controller", type=str, help="Model sterownika PLC {Uno|DIO|AIO|Eco|Custom|Void} (default: Uno)" , default="Uno")
@@ -13,7 +10,7 @@ parser.add_argument("-fv", "--framework-version", type=str, nargs="?", help="Wer
 parser.add_argument("-p", "--project", type=str, help="Lokalizacja aktywnego projektu (default: projects/{name})" , default="")
 parser.add_argument("-b", "--build", type=str, help="Lokalizacja dla skompilowanych plików framework'u i projektu (default: build)", default="build")
 parser.add_argument("-m", "--memory", type=str, help="Ilość pamięci FLASH w wykorzystywanej płytce {128kB|512kB}", default="")
-parser.add_argument("-o", "--opt", type=str, help="Poziom optymalizacji kompilacji {O0, Og, O1, O2, O3} (default: Og)", default="Og")
+parser.add_argument("-o", "--opt", type=str, help="Poziom optymalizacji kompilacji {O0, Og, O1} (default: Og)", default="Og")
 parser.add_argument("-s", "--select", type=str, nargs="?", help="Umożliwia przełączanie się między istniejącymi projektami", const="", default=None)
 parser.add_argument("-l", "--list", action="store_true", help="Wyświetla listę istniejących projektów", default=False)
 # TODO: Dodanie flagi: -e --edit -n ... -p ... -f -c ... umożliwia zmianę parametrów w projekcie
@@ -96,14 +93,14 @@ def get_last_modification(dir:str="./"):
 
 if args.info:
   lines = utils.read_lines("makefile", "#")
-  info = utils.get_vars(lines, ["TARGET", "FW", "PRO", "BUILD", "OPT", "CTRL"])
+  info = utils.get_vars(lines, ["TARGET", "FW", "PRO", "BUILD", "OPT", "CTRL", "FAMILY"])
   info["FW"] = info["FW"].replace("\\", "/")
   info["PRO"] = info["PRO"].replace("\\", "/")
   info["BUILD"] = info["BUILD"].replace("\\", "/")
   opencplc_h = utils.read_lines(f"{info["FW"]}/plc/brd/opencplc.h", "//")
   fw_version = utils.get_vars(opencplc_h, ["OPENCPLC_VERSION"], " ", "#define")["OPENCPLC_VERSION"]
   ctrl_define = {
-    "STM32G0": "Void",
+    "STM32G0": f"Void {Color.GREY}{info["FAMILY"]}{Color.END}",
     "OPENCPLC_CUSTOM": "Custom",
     "OPENCPLC_UNO": f"OpenCPLC {Color.BLUE}Uno{Color.END}",
     "OPENCPLC_DIO": f"OpenCPLC {Color.BLUE}DIO{Color.END}",
@@ -129,7 +126,9 @@ if args.hash:
   print(c_code)
   exit_flag = True
 
-if exit_flag: sys.exit()
+if exit_flag:
+  utils.save_json_prettie("wizard.json", data)
+  sys.exit()
 
 def isyes():
   yes = input().lower()
@@ -193,7 +192,10 @@ FLASH = { "128kB": 128, "512kB": 512 }[args.memory]
 RAM = { "128kB": 36, "512kB": 144 }[args.memory]
 FREQ = 64000000 if args.controller in ["eco", "void"] else 59904000
 
-if args.controller == "void": FLASH -= 4
+VOID = False
+if args.controller == "void":
+  FLASH -= 4
+  VOID = True
 elif args.controller == "eco": FLASH -= 12
 else: FLASH -= 20
 
@@ -235,16 +237,19 @@ def install_missing_add_path(name:str, cmd:str, var:str|None=None):
         sys.exit()
       reset_console = True
 
-def create_file(name:str, content:str, path:str=".", replace_map:dict={}) -> str:
+def create_file(name:str, content:str, path:str=".", replace_map:dict={}, remove_line:str="") -> str:
   file_name = f"{path}/{name}"
   with open(file_name, "w", encoding="utf-8") as file:
     content = content.strip()
     for pattern, value in replace_map.items():
       content = content.replace(pattern, str(value))
+    if remove_line: content = utils.line_remove(content, remove_line)
     file.write(content)
     suffix = "w prejekcie" if path == "." else f"w folderze {Color.GREY}{path}{Color.END}"
     print(f"{OK} Utworzono plik {Color.CREAM}{name}{Color.END} {suffix}")
   return file_name
+
+#if not VOID:
 
 install_missing_add_path("ArmGCC", "arm-none-eabi-gcc", "ARMGCC")
 install_missing_add_path("OpenOCD", "openocd")
@@ -276,7 +281,10 @@ if not os.path.exists(args.project):
 # Utworzenie pliku `main.c`, jeśli nie istnieje
 src = utils.files_list(args.project, ".c")
 if not any(os.path.basename(file) == "main.c" for files in src.values() for file in files):
-  create_file("main.c", sf.main_c, args.project)
+  main_c = sf.main_c_void if VOID else sf.main_c
+  create_file("main.c", main_c, args.project, {
+    "${FAMILY}": FAMILY,
+  })
 
 # Utworzenie pliku `main.h`, jeśli nie istnieje
 head = utils.files_list(args.project, ".h")
@@ -297,7 +305,7 @@ PLC = args.framework + "/plc"
 
 utils.make_folder(INC)
 utils.make_folder(LIB)
-if args.controller != "void": utils.make_folder(PLC)
+if not VOID: utils.make_folder(PLC)
 
 if os.path.exists("./makefile"):
   os.remove("./makefile")
@@ -321,14 +329,15 @@ if not os.path.exists("./makefile"):
       sys.exit()
     else:
       LD_FILE = ld_files[0]
-
+  
   fw:str = args.framework.replace("\\", "/").lstrip("./")
   pro:str = args.project.replace("\\", "/").lstrip("./")
   build:str = args.build.replace("\\", "/").lstrip("./")
+  LD_FILE = os.path.relpath(LD_FILE, pro)
 
   inc = utils.files_list(INC, ".c")
   lib = utils.files_list(LIB, ".c")
-  plc = utils.files_list(PLC, ".c")
+  plc = utils.files_list(PLC, ".c") if not VOID else {}
   scr = utils.files_list(pro, ".c")
 
   c_sources = {**inc, **lib, **plc, **scr}
@@ -342,11 +351,11 @@ if not os.path.exists("./makefile"):
       file = utils.replace_start(file, pro, "$(PRO)")
       if utils.len_last_line(C_SOURCES) > 80: C_SOURCES += "\\\n"
       C_SOURCES += file.replace("\\", "/").lstrip("./") + " "
-  LD_FILE = LD_FILE.replace("\\", "/").lstrip("./")
+  C_SOURCES = C_SOURCES.lstrip(" ")
 
   inc = utils.files_list(INC, ".s")
   lib = utils.files_list(LIB, ".s")
-  plc = utils.files_list(PLC, ".s")
+  plc = utils.files_list(PLC, ".s") if not VOID else {}
   scr = utils.files_list(pro, ".s")
   asm_sources = {**inc, **lib, **plc, **scr}
   ASM_SOURCES = ""
@@ -356,10 +365,11 @@ if not os.path.exists("./makefile"):
       file = utils.replace_start(file, pro, "$(PRO)")
       if utils.len_last_line(ASM_SOURCES) > 80: ASM_SOURCES += "\\\n"
       ASM_SOURCES += file.replace("\\", "/").lstrip("./") + " "
+  ASM_SOURCES = ASM_SOURCES.lstrip(" ")
 
   inc = utils.files_list(INC, ".h")
   lib = utils.files_list(LIB, ".h")
-  plc = utils.files_list(PLC, ".h")
+  plc = utils.files_list(PLC, ".h") if not VOID else {}
   scr = utils.files_list(pro, ".h")
   c_includes = {**inc, **lib, **plc, **scr}
   C_INCLUDES = ""
@@ -368,6 +378,8 @@ if not os.path.exists("./makefile"):
     folder = utils.replace_start(folder, pro, "$(PRO)")
     if utils.len_last_line(C_INCLUDES) > 80: C_INCLUDES += "\\\n"
     C_INCLUDES += "-I" + folder.replace("\\", "/").lstrip("./") + " "
+  C_INCLUDES = C_INCLUDES.lstrip(" ")
+
   create_file("makefile", sf.makefile, ".", {
     "${NAME}": args.name,
     "${CTRL}": CTRL,
@@ -396,7 +408,7 @@ if new_makefile or not os.path.exists(".vscode/c_cpp_properties.json"):
     "${NAME}": args.name,
     "${FAMILY}": FAMILY,
     "${CTRL}": CTRL
-  })
+  }, remove_line = "/plc/**" if VOID else "")
 
 if new_makefile or not os.path.exists(".vscode/launch.json"):
   create_file("launch.json", sf.launch_json, ".vscode", {
