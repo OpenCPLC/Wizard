@@ -56,7 +56,7 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-p --project`: Lokalizacja/folder aktywnego projektu. Domyślnie zostanie utworzony folder `projects`, a w nim folder projektu o nazwie `--name`. Pliki w tym folderze zostaną wykorzystane podczas kompilacji i będą traktowane przez **VSCode** jako część projektu.
 - `-b --build`: Lokalizacja/katalog dla skompilowanych plików framework'u i projektu _(domyślnie: `build`)_. Bezpośrednio w tym folderze zostanie umieszczony końcowy plik wsadowy programu `.bin`/`.hex`.
 - `-m --memory`: Ilość pamięci FLASH w wykorzystywanej płytce. Nie należy ustawiać dla oficjalnie wspieranych konstrukcji. W przypadku konstrukcji niestandardowych należy wybrać `128kB` lub `512kB`, w zależności od użytego mikrokontrolera.
-- `-o --opt`: Poziom optymalizacji kodu dla kompilacji: `O0`, `Og`, `O1`, `O2`, `O3` _(default: `Og`)_
+- `-o --opt`: Poziom optymalizacji kodu dla kompilacji: `O0`, `Og`, `O1` _(default: `Og`)_. Poziomy optymalizacji `O2`, `O3` są niedozwolone!
 - `-s --select`: Umożliwia przełączanie się między istniejącymi projektami. Gdy projekt zostanie utworzony, a następnie utworzymy nowy, powrót do pierwszego projektu polega na wywołaniu z tą flagą i podaniu jego nazwy. W przypadku dodania nowego pliku do projektu konieczne jest odświeżenie - wystarczy użyć tej flagi bez podawania wartości.
 - `-l --list`: Wyświetla listę istniejących projektów.
 - `-v --version`: Zwraca wersję programu 🧙🏼‍♂️**Wizard** oraz ścieżkę repozytorium.

@@ -3,6 +3,11 @@ import urllib.request, zipfile
 import startup_files as sf, utils
 
 parser = argparse.ArgumentParser(description="OpenPLC project wizard")
+
+
+# parser.add_argument("domyslny", type=str, help="Domyślny argument")
+
+
 parser.add_argument("-n", "--name", type=str, help="Nazwa projektu (default: app)", default="app")
 parser.add_argument("-c", "--controller", type=str, help="Model sterownika PLC {Uno|DIO|AIO|Eco|Custom|Void} (default: Uno)" , default="Uno")
 parser.add_argument("-f", "--framework", type=str, help="Lokalizacja framework'u OpenCPLC (default: opencplc)" , default="opencplc")
@@ -11,7 +16,10 @@ parser.add_argument("-p", "--project", type=str, help="Lokalizacja aktywnego pro
 parser.add_argument("-b", "--build", type=str, help="Lokalizacja dla skompilowanych plików framework'u i projektu (default: build)", default="build")
 parser.add_argument("-m", "--memory", type=str, help="Ilość pamięci FLASH w wykorzystywanej płytce {128kB|512kB}", default="")
 parser.add_argument("-o", "--opt", type=str, help="Poziom optymalizacji kompilacji {O0, Og, O1} (default: Og)", default="Og")
-parser.add_argument("-s", "--select", type=str, nargs="?", help="Umożliwia przełączanie się między istniejącymi projektami", const="", default=None)
+parser.add_argument("-s", "--select", type=str, nargs="?", help="Ustawia wybrany projekt jako aktywny lub odświeża obecny aktywny projekt", const="", default=None)
+
+# parser.add_argument("-r", "--remove", action="store_true", help="Usuwa wybrany projekt", default=False)
+
 parser.add_argument("-l", "--list", action="store_true", help="Wyświetla listę istniejących projektów", default=False)
 # TODO: Dodanie flagi: -e --edit -n ... -p ... -f -c ... umożliwia zmianę parametrów w projekcie
 # -c i -m wymagają edycji pliku flash
@@ -161,6 +169,12 @@ else:
     if not isyes():
       print(f"{INFO} Aby przełączyć się na istniejący projekt zastosuj: {Color.GREY}-s --select{Color.END} {args.name}")
       sys.exit()
+
+args.opt = args.opt[0].upper() + args.opt[1].lower()
+if args.opt not in ["O0", "Og", "01", "02", "03"]: args.opt = "0g"
+if args.opt in ["02", "03"]:
+  print(f"{ERR} Poziom optymalizacji {args.opt} jest niedozwolony")
+  sys.exit()
 
 controller_define = {
   "void": "STM32G0",
@@ -351,7 +365,7 @@ if not os.path.exists("./makefile"):
       file = utils.replace_start(file, pro, "$(PRO)")
       if utils.len_last_line(C_SOURCES) > 80: C_SOURCES += "\\\n"
       C_SOURCES += file.replace("\\", "/").lstrip("./") + " "
-  C_SOURCES = C_SOURCES.lstrip(" ")
+  C_SOURCES = C_SOURCES.rstrip(" ")
 
   inc = utils.files_list(INC, ".s")
   lib = utils.files_list(LIB, ".s")
@@ -365,7 +379,7 @@ if not os.path.exists("./makefile"):
       file = utils.replace_start(file, pro, "$(PRO)")
       if utils.len_last_line(ASM_SOURCES) > 80: ASM_SOURCES += "\\\n"
       ASM_SOURCES += file.replace("\\", "/").lstrip("./") + " "
-  ASM_SOURCES = ASM_SOURCES.lstrip(" ")
+  ASM_SOURCES = ASM_SOURCES.rstrip(" ")
 
   inc = utils.files_list(INC, ".h")
   lib = utils.files_list(LIB, ".h")
@@ -378,7 +392,7 @@ if not os.path.exists("./makefile"):
     folder = utils.replace_start(folder, pro, "$(PRO)")
     if utils.len_last_line(C_INCLUDES) > 80: C_INCLUDES += "\\\n"
     C_INCLUDES += "-I" + folder.replace("\\", "/").lstrip("./") + " "
-  C_INCLUDES = C_INCLUDES.lstrip(" ")
+  C_INCLUDES = C_INCLUDES.rstrip(" ")
 
   create_file("makefile", sf.makefile, ".", {
     "${NAME}": args.name,

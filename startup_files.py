@@ -5,6 +5,7 @@ FW = ${FRAMEWORK}
 PRO = ${PROJECT}
 BUILD = ${BUILD}
 FAMILY = ${FAMILY}
+OPT = ${OPT}
 
 C_SOURCES = \\
 ${C_SOURCES}
@@ -31,8 +32,8 @@ BIN = $(CP) -O binary -S
 CPU = -mcpu=cortex-m0plus
 # CPU = -mcpu=cortex-m4
 
-MCU = $(CPU) -mthumb
-# MCU = $(CPU) -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard  # Floating point numbers
+MCU = $(CPU) -mthumb -mfloat-abi=soft
+# MCU = $(CPU) -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard # Floating point numbers
 AS_DEFS = -D$(FAMILY) -D$(CTRL)
 C_DEFS = -D$(FAMILY) -D$(CTRL)
 
@@ -92,9 +93,9 @@ flash:
 run: all flash
 
 clean:
-	cmd /c del /q $(BUILD)\$(TARGET).* && \\
-	if [ -d "$(BUILD)\\$(FW)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(FW); fi && \\
-	if [ -d "$(BUILD)\\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(PRO); fi
+	cmd /c del /q $(BUILD)\\\\$(TARGET).* && \\
+	if [ -d "$(BUILD)\\\\$(FW)" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(FW); fi && \\
+	if [ -d "$(BUILD)\\\\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\\\\$(PRO); fi
 
 clr: clean
 
@@ -260,16 +261,16 @@ void loop(void)
   while(1) {
     // Ustawienie diody informacyjnej, aby świeciła na czerwoną
     LED_Set(RGB_Red);
-    delay(1000); // Odczekaj 1s
+    delay(1000); // Odczekaj 1000ms
     // Ustawienie diody informacyjnej, aby świeciła na zieloną
     LED_Set(RGB_Green);
-    delay(1000); // Odczekaj 1s
+    delay(1000); // Odczekaj 1000ms
     // Ustawienie diody informacyjnej, aby świeciła na niebieską
     LED_Set(RGB_Blue);
-    delay(1000); // Odczekaj 1s
+    delay(1000); // Odczekaj 1000ms
     // Wyłączenie diody informacyjnej
     LED_Rst();
-    delay(1000); // Odczekaj 1s
+    delay(1000); // Odczekaj 1000ms
   }
 }
 
@@ -295,11 +296,6 @@ main_c_void = """
 #include "sys.h"
 #include "vrts.h"
 #include "dbg.h"
-
-// Stos pamięci dla wątku Debugera (bash + dbg + log)
-static uint32_t stack_dbg[256];
-// Stos pamięci dla funkcji loop
-static uint32_t stack_loop[1024];
 
 //------------------------------------------------------------------------------------------------- dbg
 
@@ -339,29 +335,30 @@ void loop(void)
 {
   while(1) {
     GPIO_Tgl(&led); // Zmiana stanu diody
-    LOG_Info("Do nothing"); // Wyświetl wiadomość w pętli
+    LOG_Info("Idle..."); // Wyświetl wiadomość w pętli
     delay(1000); // Odczekaj 1s
   }
 }
 
 //------------------------------------------------------------------------------------------------- main
 
+stack(stack_dbg, 256); // Stos pamięci dla wątku debug'era (logs + bash)
+stack(stack_loop, 256); // Stos pamięci dla funkcji loop
+
 int main(void)
 {
   SYS_Clock_Init(); // Konfiguracja systemowego sygnału zegarowego
   RTC_Init(); // Włączenie zegara czasu rzeczywistego (RTC)
-  SYSTICK_Init(10); // Uruchomienie zegara systemowego z dokładnością do 10ms
+  systick_init(10); // Uruchomienie zegara systemowego z dokładnością do 10ms
   DBG_Init(&dbg_uart, &dbg_file); // Inicjalizacja debuger'a (bash + dbg + log)
+  DBG_Enter();
+  LOG_Init("N/A", "Nucleo");
   LOG_Info("Hello ${FAMILY} template project"); // Wyświetl wiadomość startową
   GPIO_Init(&led); // Inicjalizacja diody LED
-  // Dodanie wątku debuger'a (bash + dbg + log)
-  thread(&DBG_Loop, stack_dbg, sizeof(stack_dbg) / sizeof(uint32_t));
-  // Dodanie funkcji loop jako wątek
-  thread(&loop, stack_loop, sizeof(stack_loop) / sizeof(uint32_t));
-  // Włączenie systemy przełączania wątków VRTS
-  VRTS_Init();
-  // W to miejsce program nigdy nie powinien dojść
-  while(1);
+  thread(DBG_Loop, stack_dbg); // Dodanie wątku debug'era (logs + bash)
+  thread(loop, stack_loop); // Dodanie funkcji loop jako wątek
+  vrts_init(); // Włączenie systemy przełączania wątków VRTS
+  while(1); // W to miejsce program nigdy nie powinien dojść
 }
 """
 
