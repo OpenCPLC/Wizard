@@ -233,65 +233,65 @@ extensions_json = """
 
 main_h = """
 /**
- * @file  main.h
+ * @name  ${NAME}
  * @brief W tym pliku należy umieścić parametry konfiguracyjne '#define', które chce się nadpisać.
- *        Wiele z bibliotek OpenCPLC załącza ten plik '#include', zatem musi on istnieć, nawet jeśli będzie pusty.
+ * @note  Wiele z bibliotek OpenCPLC załącza ten plik '#include', zatem musi on istnieć, nawet jeśli będzie pusty.
  *        Dzięki takiemu rozwiązaniu można nadpisać różnego rodzaju definicje (zmienne) konfiguracyjne.
  *        Biblioteki OpenCPLC w pierwszej kolejności będą pobierały zawarte tutaj zmienne,
  *        zamiast korzystać z domyślnych wartości zawartych we własnych plikach nagłówkowych '.h'.
+ *        Zmiana zminnych konfuguracyjnych w tym pliku konieczne jest usunięcie skompilowanych plików!
+ *        Użyj 'make clean' lub `make clean_all`.
  * @date  ${DATE}
  */
 
-#define SYS_CLOCK_FREQ ${FREQ}
+#define PRO_NAME                  "${NAME}"
+#define PRO_BOARD                 "${BOARD}"
+#define PRO_MCU                   "${MCU}"
+#define PRO_OPENCPLC_VERSION      "${VERSION}"
+#define PRO_OPTIMALIZATION_LEVEL  "${OPT}"
+#define PRO_FLASH_RESERVE_KB      ${FLASH}
+
+#define LOG_LEVEL                 LOG_LEVEL_INFO
+#define SYS_CLOCK_FREQ            ${FREQ}
 """
 
 main_c = """
-// Import podstawowych funkcji sterownika.
-#include "opencplc.h"
+#include "opencplc.h" // Import funkcji sterownika
 
-// Stos pamięci dla wątku PLC
-static uint32_t stack_plc[256];
-// Stos pamięci dla wątku Debugera (bash + dbg + log)
-static uint32_t stack_dbg[256];
-// Stos pamięci dla funkcji loop
-static uint32_t stack_loop[1024];
-
+// Wątek aplikacji
 void loop(void)
 {
   while(1) {
     // Ustawienie diody informacyjnej, aby świeciła na czerwoną
     LED_Set(RGB_Red);
-    delay(1000); // Odczekaj 1000ms
+    delay(1000); // Odczekaj 1s
     // Ustawienie diody informacyjnej, aby świeciła na zieloną
     LED_Set(RGB_Green);
-    delay(1000); // Odczekaj 1000ms
+    delay(1000); // Odczekaj 1s
     // Ustawienie diody informacyjnej, aby świeciła na niebieską
     LED_Set(RGB_Blue);
-    delay(1000); // Odczekaj 1000ms
+    delay(1000); // Odczekaj 1s
     // Wyłączenie diody informacyjnej
     LED_Rst();
-    delay(1000); // Odczekaj 1000ms
+    delay(1000); // Odczekaj 1s
   }
 }
 
+stack(stack_plc, 256); // Stos pamięci dla wątku PLC
+stack(stack_dbg, 256); // Stos pamięci dla wątku debug'era (logs + bash)
+stack(stack_loop, 1024); // Stos pamięci dla funkcji loop
+
 int main(void)
 {
-  // Dodanie wątku sterownika
-  thread(&PLC_Thread, stack_plc, sizeof(stack_plc) / sizeof(uint32_t));
-  // Dodanie wątku debuger'a (bash + dbg + log)
-  thread(&DBG_Loop, stack_dbg, sizeof(stack_dbg) / sizeof(uint32_t));
-  // Dodanie funkcji loop jako wątek
-  thread(&loop, stack_loop, sizeof(stack_loop) / sizeof(uint32_t));
-  // Włączenie systemy przełączania wątków VRTS
-  VRTS_Init();
-  // W to miejsce program nigdy nie powinien dojść
-  while(1);
+  thread(PLC_Thread, stack_plc); // Dodanie wątku sterownika
+  thread(DBG_Loop, stack_dbg); // Dodanie wątku debug'era (logs + bash)
+  thread(loop, stack_loop); // Dodanie funkcji loop jako wątek
+  vrts_init(); // Włączenie systemy przełączania wątków VRTS
+  while(1); // W to miejsce program nigdy nie powinien dojść
 }
 """
 
 main_c_void = """
-
-// Import bibliotek
 #include "rtc.h"
 #include "sys.h"
 #include "vrts.h"
@@ -299,28 +299,13 @@ main_c_void = """
 
 //------------------------------------------------------------------------------------------------- dbg
 
-uint8_t dbg_buff_buffer[2048];
-BUFF_t dbg_buff = {
-  .mem = dbg_buff_buffer,
-  .size = sizeof(dbg_buff_buffer),
-  .console_mode = true,
-  .Echo = DBG_Char,
-  .Enter = DBG_Enter,
-};
 UART_t dbg_uart = {
   .reg = USART1,
-  .tx_pin = UART1_TX_PA9,
-  .rx_pin = UART1_RX_PA10,
+  .tx_pin = UART1_TX_PC4,
+  .rx_pin = UART1_RX_PC5,
   .dma_channel = DMA_Channel_4,
-  .interrupt_level = INT_Level_Low,
-  .UART_115200,
-  .buff = &dbg_buff
-};
-uint8_t dbg_file_buffer[2048];
-FILE_t dbg_file = { 
-  .name = "debug",
-  .buffer = dbg_file_buffer,
-  .limit = sizeof(dbg_file_buffer)
+  .int_prioryty = INT_Prioryty_Low,
+  .UART_115200
 };
 
 //------------------------------------------------------------------------------------------------- app
@@ -335,7 +320,7 @@ void loop(void)
 {
   while(1) {
     GPIO_Tgl(&led); // Zmiana stanu diody
-    LOG_Info("Idle..."); // Wyświetl wiadomość w pętli
+    LOG_Info("Do nothing"); // Wyświetl wiadomość w pętli
     delay(1000); // Odczekaj 1s
   }
 }
@@ -347,12 +332,11 @@ stack(stack_loop, 256); // Stos pamięci dla funkcji loop
 
 int main(void)
 {
-  SYS_Clock_Init(); // Konfiguracja systemowego sygnału zegarowego
-  RTC_Init(); // Włączenie zegara czasu rzeczywistego (RTC)
+  system_clock_init(); // Konfiguracja systemowego sygnału zegarowego
   systick_init(10); // Uruchomienie zegara systemowego z dokładnością do 10ms
-  DBG_Init(&dbg_uart, &dbg_file); // Inicjalizacja debuger'a (bash + dbg + log)
+  RTC_Init(); // Włączenie zegara czasu rzeczywistego (RTC)
+  DBG_Init(&dbg_uart); // Inicjalizacja debuger'a (bash + dbg + log)
   DBG_Enter();
-  LOG_Init("N/A", "Nucleo");
   LOG_Info("Hello ${FAMILY} template project"); // Wyświetl wiadomość startową
   GPIO_Init(&led); // Inicjalizacja diody LED
   thread(DBG_Loop, stack_dbg); // Dodanie wątku debug'era (logs + bash)

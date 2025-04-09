@@ -5,31 +5,43 @@ import startup_files as sf, utils
 parser = argparse.ArgumentParser(description="OpenPLC project wizard")
 
 
-# parser.add_argument("domyslny", type=str, help="Domyślny argument")
+
+# wizard -i
+# jak projekt został usunięty daj o tym informację
+#
+
+# 
 
 
-parser.add_argument("-n", "--name", type=str, help="Nazwa projektu (default: app)", default="app")
-parser.add_argument("-c", "--controller", type=str, help="Model sterownika PLC {Uno|DIO|AIO|Eco|Custom|Void} (default: Uno)" , default="Uno")
+# TODO `wizard.exe`:
+# - Kompilator `gcc` i `openocd` tworzące się lokalnie w przestrznie workspace _(wyeliminuje to problem z wersjami)_
+#   - Wtedy make luzem na dysku C
+# - Wszystkie kofiguracjie przechowywane w pliku `main.h`, a nie wspólnym `.json` 
+#   - Prościej będzie przywrócić projekt, bo nie będzie trzeba znać jego konfiguracji
+#   - Prościej będzie po prostu zmodyfikować jakieś wybrane wcześniej ustawienia
+# - Plik `flash.ld` generowany dynamicznie, zgodnie z ustawieniami _(tam się nic nie zmienia - będzie czyściej z punktu widzenia programisty aplikacji)_
+
+
+parser.add_argument("name", type=str, help="Nazwa {name} projektu", default="")
+parser.add_argument("-n", "--new", action="store_true", help="Utwórz projekt o wybranej nazwie", default=False)
+parser.add_argument("-s", "--select", action="store_true", help="Ustaw wybrany projekt jako aktywny", default=False)
+parser.add_argument("-r", "--remove", action="store_true", help="Usuń wybrany projekt", default=False)
+parser.add_argument("-c", "--controller", type=str, help="Model sterownika PLC {Uno|DIO|AIO|Eco|Custom|Void} (default: Uno)", default="Uno")
+parser.add_argument("-p", "--project", type=str, help="Lokalizacja aktywnego projektu (default: projects/{name})", default="")
 parser.add_argument("-f", "--framework", type=str, help="Lokalizacja framework'u OpenCPLC (default: opencplc)" , default="opencplc")
 parser.add_argument("-fv", "--framework-version", type=str, nargs="?", help="Wersja framework'u OpenCPLC (default: latest)", const=None, default="latest")
-parser.add_argument("-p", "--project", type=str, help="Lokalizacja aktywnego projektu (default: projects/{name})" , default="")
-parser.add_argument("-b", "--build", type=str, help="Lokalizacja dla skompilowanych plików framework'u i projektu (default: build)", default="build")
-parser.add_argument("-m", "--memory", type=str, help="Ilość pamięci FLASH w wykorzystywanej płytce {128kB|512kB}", default="")
+parser.add_argument("-u", "--microcontroller", type=int, help="Ilość pamięci FLASH [kB] w wykorzystywanej płytce {STM32G081|STM32G0C1}", default=0)
+parser.add_argument("-m", "--memory", type=int, help="Ilość zarezerwowanej pamięci FLASH [kB] na config i eeprom", default="")
 parser.add_argument("-o", "--opt", type=str, help="Poziom optymalizacji kompilacji {O0, Og, O1} (default: Og)", default="Og")
-parser.add_argument("-s", "--select", type=str, nargs="?", help="Ustawia wybrany projekt jako aktywny lub odświeża obecny aktywny projekt", const="", default=None)
-
-# parser.add_argument("-r", "--remove", action="store_true", help="Usuwa wybrany projekt", default=False)
-
+parser.add_argument("-b", "--build", type=str, help="Lokalizacja dla skompilowanych plików framework'u i projektu (default: build)", default="build")
 parser.add_argument("-l", "--list", action="store_true", help="Wyświetla listę istniejących projektów", default=False)
-# TODO: Dodanie flagi: -e --edit -n ... -p ... -f -c ... umożliwia zmianę parametrów w projekcie
-# -c i -m wymagają edycji pliku flash
-# -fv wymaga edycji pliku .h
-# TODO: Dodanie flagi: -y --yes automatycznie potwierdza wszystkie akcje
-parser.add_argument("-v", "--version", action="store_true", help="Wersję programu 'wizard' oraz inne informacje", default=False)
 parser.add_argument("-i", "--info", action="store_true", help="Zwraca podstawowe informacje o bieżącym projekcie", default=False)
+parser.add_argument("-v", "--version", action="store_true", help="Wersję programu 'wizard' oraz inne informacje", default=False)
 parser.add_argument("-hl", "--hash", nargs="+", type=str, help="[Hash] Lista tagów do za-hash'owania")
 parser.add_argument("-ht", "--hash_title", type=str, help="[Hash] Tytół dla enum'a, który zostanie utworzony z listy hash'ów", default="")
 args = parser.parse_args()
+
+# STM32G081|STM32G0C1
 
 class Color():
   BLUE = "\033[34m"
@@ -304,6 +316,7 @@ if not any(os.path.basename(file) == "main.c" for files in src.values() for file
 head = utils.files_list(args.project, ".h")
 if not any(os.path.basename(file) == "main.h" for files in head.values() for file in files):
   create_file("main.h", sf.main_h, args.project, {
+    "${NAME}": args.name,
     "${DATE}": utils.get_date(),
     "${FREQ}": str(FREQ)
   })
