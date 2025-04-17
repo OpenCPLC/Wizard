@@ -1,4 +1,6 @@
 */
+!files/
 *.spec
-makefile
-wizard.json
+/wizard.json
+/makefile
+/flash.ld
