@@ -1,0 +1,14 @@
+{
+  "paths": {
+    "projects": "./projects",
+    "framework": "./opencplc",
+    "build": "./build"
+  },
+  "default": {
+    "framework-version": "latest",
+    "chip": "STM32G081",
+    "user-memory": "4kB",
+    "opt-level": "0g"
+  },
+  "pwsh": true
+}

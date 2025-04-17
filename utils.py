@@ -1,36 +1,48 @@
-import winreg, os, subprocess, codecs, json, re
+import winreg, os, sys, subprocess, re
+import urllib.request, zipfile, io
 from datetime import datetime
+import xaeian as xn
 
-def replace_start(text: str, find:str, replace:str):
-  pattern = rf"(?m)^{re.escape(find)}\b"
-  return re.sub(pattern, replace, text)
+class Ico(xn.IcoText): pass
+class Color(xn.Color): pass
 
-def program_recognized(name:str) -> bool:
-  try:
-    subprocess.run([name, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-    return True
-  except Exception:
-    return False
+#------------------------------------------------------------------------------
 
-def clone_repo(url:str, path:str) -> bool:
-  result = subprocess.run(["git", "clone", url, path], capture_output=True, text=True)
-  if result.returncode == 0: return True
-  else: return False
+def HashString(string:str) -> int:
+  hash_value = 5381
+  for char in string:
+    hash_value = ((hash_value << 5) + hash_value) + ord(char)
+  return hash_value & 0xFFFFFFFF
 
-def files_list(path:str="./", ext:str="") -> dict[str:list[str]]:
+def CCodeEnum(hash_list:list[str], title:str="") -> str:
+  if title: title = "".join(char for char in title.upper() if char.isalpha()) + "_Hash_"
+  else: title = "HASH_"
+  c_code = "\ntypedef enum {\n"
+  for name in hash_list:
+    value = HashString(name.lower())
+    name = name.title()
+    name = ''.join(char for char in name if char.isalpha())
+    c_code += "  " + title + name + " = " + str(value) + ",\n"
+  c_code += "} " + title + "e;\n"
+  return c_code
+
+#------------------------------------------------------------------------------
+
+def FilesList(path:str="./", endswith:str="") -> dict[str:list[str]]:
   folder_files = {}
   for folder, subfolders, files in os.walk(path):
+    folder = xn.FixPath(folder)
     file_list = []
     for file in files:
-      if not ext or file.endswith(f".{ext.lstrip(".")}"):
-        full_path = os.path.join(folder, file)
+      if not endswith or file.endswith(endswith):
+        full_path = xn.FixPath(os.path.join(folder, file))
         file_list.append(full_path)
     if file_list:
       folder_files[folder] = file_list
       # subfolders - not used
   return folder_files
 
-def files_mdate(path:str="./"):
+def FilesMDate(path:str="./"):
   file_date = {}
   # Traverse through all files and directories within the provided directory
   for folder, subfolders, files in os.walk(path):
@@ -39,66 +51,28 @@ def files_mdate(path:str="./"):
       file_date[file_path] = datetime.fromtimestamp(os.path.getmtime(file_path))
   return file_date
 
-def get_date() -> str:
-  return datetime.now().strftime("%Y-%m-%d")
-
-def files_mdate_max(path:str="./") -> tuple|None:
-  file_date = files_mdate(path)
+def FilesMDateMax(path:str="./") -> tuple|None:
+  file_date = FilesMDate(path)
   if not file_date: return None
   max_date = max(file_date.values())
-  file = [klucz for klucz, data in file_date.items() if data == max_date][0]
+  file = [key for key, data in file_date.items() if data == max_date][0]
   return file, max_date
 
-def len_last_line(string:str) -> int:
-  return len(string.split('\n')[-1].strip())
-
-def make_folder(path:str):
-  if not os.path.exists(path):
-    os.makedirs(path)
-
-def folder_exists(path:str):
-  if os.path.exists(path) and os.path.isdir(path): return True
-  else: return False
-
-def folder_remove(path:str):
-  for root, dirs, files in os.walk(path, topdown=False):
-    for file in files:
-      os.remove(os.path.join(root, file))
-    for dir in dirs:
-      os.rmdir(os.path.join(root, dir))
-  os.rmdir(path)
-
-def save_json_prettie(name:str, content:dict):
-  name = name.removesuffix('.json') + '.json'
-  openFile = codecs.open(name, "w+", "utf-8")
-  openFile.write(json.dumps(content, indent=2))
-  openFile.close()
-
-def load_json(name:str):
-  if not os.path.exists(name):
-    return None
-  try:
-    with open(name, 'r') as file:
-      data = json.load(file)
-      return data if data else {}
-  except json.JSONDecodeError:
-    return None
-
-class Env:
+class ENV:
     
   @staticmethod
-  def path_exist(path) -> bool:
+  def PathExist(path) -> bool:
     env_path = os.environ.get("PATH", "")
     if path in env_path: return True
     else: return False
 
   @staticmethod
-  def var_exist(var) -> bool:
+  def VarExist(var) -> bool:
     if var in os.environ: return True
     else: return False
 
   @staticmethod
-  def add_path(path) -> bool:
+  def AddPath(path) -> bool:
     try:
       key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Environment", 0, winreg.KEY_SET_VALUE | winreg.KEY_READ)
       current_path, _ = winreg.QueryValueEx(key, "Path")
@@ -109,7 +83,7 @@ class Env:
       return False
 
   @staticmethod
-  def add_variable(name, value) -> bool:
+  def AddVariable(name, value) -> bool:
     try:
       key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Environment", 0, winreg.KEY_SET_VALUE | winreg.KEY_READ)
       winreg.SetValueEx(key, name, 0, winreg.REG_EXPAND_SZ, value)
@@ -117,39 +91,45 @@ class Env:
       return True
     except Exception as e:
       return False
-    
-def read_lines(file_path: str, comment: str = "#"):
-  lines = []
-  with open(file_path, "r") as file:
-    current_line = ""
-    for line in file:
-      line = line.split(comment, 1)[0].rstrip()
-      if line.endswith("\\"):
-        current_line += line[:-1].rstrip()
-      else:
-        current_line += line
-        if current_line.strip():
-          lines.append(current_line.replace("\\\\", "\\"))
-        current_line = ""
-    if current_line.strip():
-      lines.append(current_line.replace("\\\\", "\\"))
-  return lines
 
-def get_vars(lines: list[str], prefix_list: list[str], sep="=", trim_start:str="") -> dict:
-  if trim_start:
-    lines = [re.sub(f"^{re.escape(trim_start)}+", "", line).lstrip() for line in lines]
-  filtered_lines = [s for s in lines if any(s.startswith(prefix) for prefix in prefix_list)]
-  variables = {}
-  pattern = r"^\s*(\w+)\s*" + re.escape(sep) + r"\s*(.*)"
-  for line in filtered_lines:
-    match = re.match(pattern, line)
-    if match:
-      key = match.group(1).strip()
-      value = match.group(2).strip().strip('"')
-      variables[key] = value
-  return variables
+def Integer(value:str|int|None) -> int|None:
+  if value is None: return
+  number = ""
+  for char in str(value):
+    if char.isdigit(): number += char
+    else: break
+  return int(number) if number else None
 
-def line_remove(text:str, phrase:str, limit:int=1) -> str:
+#------------------------------------------------------------------------------
+
+# def VersionEncode(version:str, hex=False) -> int|str:
+#   try:
+#     major, minor, patch = map(int, version.split("."))
+#     encoded_version = (major << 24) | (minor << 16) | patch
+#     return f"0x{encoded_version:08X}" if hex else encoded_version
+#   except ValueError:
+#     raise ValueError(f"Invalid version format: {version}, expect: 'major.minor.patch'")
+
+# def VersionDecode(encoded_version:int|str) -> str:
+#   if isinstance(encoded_version, str):
+#     if encoded_version.lower().startswith("0x"):
+#       encoded_version = int(encoded_version, 16)
+#     else:
+#       raise ValueError(f"Invalid hex format: {encoded_version}, expect: '0xAABBCCCC'")
+#   major = (encoded_version >> 24) & 0xFF
+#   minor = (encoded_version >> 16) & 0xFF
+#   patch = encoded_version & 0xFFFF
+#   return f"{major}.{minor}.{patch}"
+
+def FrameworkTrueVersion(framework_version:str, latest_version:str):
+  if framework_version in ["latest", "last"]: framework_version = latest_version
+  elif framework_version in ["dev", "develop"]: framework_version = "develop"
+  elif framework_version in ["main", "master"]: framework_version = "main"
+  return framework_version
+
+#------------------------------------------------------------------------------
+
+def LineRemove(text:str, phrase:str, limit:int=1) -> str:
   lines = text.splitlines()
   result = []
   count = 0
@@ -158,7 +138,7 @@ def line_remove(text:str, phrase:str, limit:int=1) -> str:
     else: result.append(line)
   return "\n".join(result)
 
-def line_replace(text:str, phrase:str, new_content:str, limit:int=1) -> str:
+def LineReplace(text:str, phrase:str, new_content:str, limit:int=1) -> str:
   lines = text.splitlines()
   result = []
   count = 0
@@ -172,7 +152,7 @@ def line_replace(text:str, phrase:str, new_content:str, limit:int=1) -> str:
       result.append(line)
   return "\n".join(result)
 
-def line_add_before(text: str, phrase:str, new_line:str, limit:int=1) -> str:
+def LineAddBefore(text: str, phrase:str, new_line:str, limit:int=1) -> str:
   lines = text.splitlines()
   result = []
   count = 0
@@ -181,3 +161,182 @@ def line_add_before(text: str, phrase:str, new_line:str, limit:int=1) -> str:
       result.append(new_line)
     result.append(line)
   return "\n".join(result)
+
+def LinesClear(lines:list[str], comment:str="#"):
+  lines_ok = []
+  current_line = ""
+  for line in lines:
+    line = line.split(comment, 1)[0].rstrip()
+    if line.endswith("\\"):
+      current_line += line[:-1].rstrip()
+    else:
+      current_line += line
+      if current_line.strip():
+        lines_ok.append(current_line.replace("\\\\", "\\"))
+      current_line = ""
+  if current_line.strip():
+    lines_ok.append(current_line.replace("\\\\", "\\"))
+  return lines_ok
+
+def GetVars(lines:list[str], prefix_list:list[str], sep="=", trim_start:str="") -> dict:
+  if trim_start:
+    lines = [re.sub(f"^{re.escape(trim_start)}+", "", line).lstrip() for line in lines]
+  filtered_lines = [s for s in lines if any(s.startswith(prefix) for prefix in prefix_list)]
+  variables = {}
+  pattern = r"^\s*(\w+)\s*" + re.escape(sep) + r"\s*(.*)"
+  for line in filtered_lines:
+    match = re.match(pattern, line)
+    if match:
+      key = match.group(1).strip()
+      value = match.group(2).strip().strip('"')
+      variables[key] = value
+  return variables
+
+def GetVar(lines:list[str], var_name:str, sep="=", trim_start:str="") -> dict|None:
+  vars =  GetVars(lines, [var_name])
+  return vars[var_name] if var_name in vars else None
+
+def LastLineLen(string:str) -> int:
+  return len(string.split('\n')[-1].strip())
+
+#------------------------------------------------------------------------------ High-Level
+
+def SwapCommentLines(content:str, comment:str="#", next_line:bool=False) -> str:
+  lines = content.splitlines(keepends=False)
+  i = 0
+  while i < len(lines):
+    find = None
+    replace = ""
+    if lines[i].startswith(f"{comment} "):
+      find = f"{comment} "
+    elif lines[i].startswith(f"{comment}\t"):
+      find = f"{comment}\t"
+      replace = "\t"
+    if find is not None:
+      lines[i] = xn.ReplaceStart(lines[i], find, replace)
+      if next_line:
+        if i + 1 < len(lines):
+          lines[i + 1] = find + lines[i + 1].lstrip()
+          i += 1
+      elif i:
+        lines[i - 1] = find + lines[i - 1].lstrip()
+    i += 1
+  return "\n".join(lines)
+
+def CreateFile(name:str, content:str, path:str="./", replace_map:dict={}, remove_line:str="", rewrite=False) -> str:
+  file_name = xn.FixPath(f"{path}/{name}")
+  content = content.strip()
+  for pattern, value in replace_map.items():
+    content = content.replace(pattern, str(value))
+  if remove_line: content = LineRemove(content, remove_line)
+  xn.FILE.Save(file_name, content)
+  suffix = "w prejekcie" if path == "." else f"w folderze {Color.GREY}{path}{Color.END}"
+  print(f"{Ico.OK} {"Nadpisano" if rewrite else "Utworzono"} plik {Color.ORANGE}{name}{Color.END} {suffix}")
+  return file_name
+
+def GetProjectList(path:str) -> list[str]:
+  pro_names = []
+  pro_paths = []
+  path = xn.FixPath(path)
+  files_list = FilesList(path, "main.h")
+  for pro_path in files_list.keys():
+    pro_name = xn.ReplaceStart(pro_path, path + "/", "")
+    if not any(pn.lower() == pro_name.lower() for pn in pro_names):
+      pro_names.append(pro_name)
+      pro_paths.append(pro_path)
+    else: print(f"{Ico.WRN} Nazwa projektu {Color.RED}name{Color.END} powtórzyła się w lokalizacji {Color.YELLOW}{pro_names}{Color.END} {Color.RED}{pro_path}{Color.END}")
+  return dict(zip(pro_names, pro_paths))
+
+def LastModification(path:str="./") -> str:
+  file_date = FilesMDateMax(path)
+  if not file_date: return f"{Color.GREY}Unknown{Color.END}"
+  file = xn.LocalPath(file_date[0], path)
+  date = file_date[1].strftime("%Y-%m-%d %H:%M:%S")
+  return f"{Color.BLUE}{file}{Color.END} {Color.GREY}({date}){Color.END}"
+
+#------------------------------------------------------------------------------ Remote
+
+FTP_PATH = "http://sqrt.pl"
+INSTALL_PATH = "C:\\"
+YES_NO = f"[{Color.GREEN}TAK{Color.END}/{Color.RED}NIE{Color.END}]"
+
+def IsYes(msg:str="Czy zrobić to automatycznie"):
+  print(f"{Ico.INF} {msg}? {YES_NO}:", end=" ")
+  yes = input().lower()
+  return yes == "tak" or yes == "t" or yes == "true" or yes == "yes" or yes == "y"
+
+def Install(name:str, path:str|None=None, yes:bool=False):
+  if path is path: path = INSTALL_PATH
+  print(f"{Ico.WRN} Program {Color.BLUE}{name}{Color.END} nie jest zainstalowany")
+  if not yes and not IsYes():
+    repo_path = f"{Color.GREY}https://{Color.END}github.com/{Color.TEAL}OpenCPLC{Color.END}/Wizard"
+    print(f"{Ico.ERR} Zapoznaj się z instrukcją {repo_path}")
+    sys.exit(0)
+  try:
+    url = f"{FTP_PATH}/{name}.zip"
+    response = urllib.request.urlopen(url)
+    zip_content = response.read()
+    with zipfile.ZipFile(io.BytesIO(zip_content)) as zip_ref:
+      xn.DIR.Create(f"{path}\\{name}")
+      zip_ref.extractall(f"{path}\\{name}")
+      print(f"{Ico.OK} Instalacja zakończona powodzeniem")
+  except Exception as e:
+    print(f"{Ico.ERR} Błąd podczas instalacji {Color.BLUE}{name}{Color.END}: {e}")
+    sys.exit(1)
+
+def GitCloneRepo(url:str,path:str,ref:str|None=None) -> bool:
+  cmd = ["git", "clone"]
+  if ref: cmd += ["--branch", ref]
+  cmd += [url, path]
+  result = subprocess.run(cmd, capture_output=True, text=True)
+  return result.returncode == 0
+
+def ProgramVersion(name:str) -> str|None:
+  try:
+    result = subprocess.run(
+      [name, '--version'],
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE,
+      check=True,
+      text=True
+    )
+    output = result.stdout + result.stderr
+    match = re.search(r'\b\d+\.\d+\.\d+\b', output)
+    if match:
+      return match.group(0)
+    return None
+  except Exception:
+    return None
+
+RESET_CONSOLE = False
+def InstallMissingAddPath(name:str, cmd:str, var:str|None=None, yes:bool=False, print_version:bool=False) -> str|None:
+  global RESET_CONSOLE
+  version = ProgramVersion(cmd)
+  if not version:
+    Install(name, yes=yes)
+    path = f"{INSTALL_PATH}\\{name}\\bin"
+    if var: ENV.AddVariable(var, path)
+    if not ENV.PathExist(path):
+      if var and ENV.AddPath(f"%{var}%") or ENV.AddPath(path):
+        print(f"{Ico.OK} Ścieżka dla {Color.YELLOW}{cmd}{Color.END} została dodana do zmiennych środowiskowych")
+      else:
+        print(f"{Ico.ERR} Błąd podczas dodawania ścieżki dla {Color.YELLOW}{cmd}{Color.END} do zmiennych środowiskowych")
+        sys.exit(1)
+      RESET_CONSOLE = True
+  elif print_version:
+    print(f"{Ico.OK} Program {Color.YELLOW}{cmd}{Color.END} jest zainstalowany w wersji {Color.BLUE}{version}{Color.END}")
+  return version
+
+def GitCloneMissing(url: str, path:str, ref:str, yes:bool=False):
+  if not xn.DIR.Exists(path):
+    print(f"{Ico.WRN} Framework {Color.MAGENTA}opencplc{Color.END} nie jest zainstalowany w wersji {Color.BLUE}{ref}{Color.END}")
+    print(f"{Ico.INF} Czy zrobić to automatycznie? {YES_NO}:", end=" ")
+    if not yes and not IsYes():
+      repo_path = f"{Color.GREY}https://{Color.END}github.com/{Color.TEAL}OpenCPLC{Color.END}/Framework"
+      print(f"{Ico.ERR} Zapoznaj się z instrukcją {repo_path}")
+      sys.exit(0)
+    if not GitCloneRepo(url, path, ref):
+      print(f"{Ico.ERR} Próba sklonowania repozytorium {Color.ORANGE}{url}{Color.END} nie powiodła się")
+      sys.exit(1)
+    print(f"{Ico.OK} Repozytorium {Color.ORANGE}{url}{Color.END} zostało sklonowane do {Color.GREY}{xn.LocalPath(path)}{Color.END}")
+

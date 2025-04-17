@@ -1,0 +1,27 @@
+{
+  "configurations": [
+    {
+      "name": "${NAME}",
+      "includePath": [
+        "${FRAMEWORK_PATH}/inc/**",
+        "${FRAMEWORK_PATH}/lib/**",
+        "${FRAMEWORK_PATH}/plc/**",
+        "${PROJECT_PATH}/**"
+      ],
+      "defines": [
+        "${FAMILY}",
+        "OPENCPLC_${BOARD}"
+      ],
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "gcc-arm",
+      "compilerPath": "${env:ARMGCC}/arm-none-eabi-gcc.exe",
+      "compilerArgs": [
+        "-mcpu=cortex-m0plus",
+        "-mthumb"
+      ],
+      "configurationProvider": "ms-vscode.makefile-tools"
+    }
+  ],
+  "version": 4
+}
