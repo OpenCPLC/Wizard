@@ -1,6 +1,6 @@
 ## 🔮 Wizard
 
-**Wizard** jest aplikacją konsolową usprawniającą pracę z **OpenCPLC**, którego zadaniem jest dostosowanie środowiska pracy tak, aby 👨‍💻programista-automatyk mógł skupić się na tworzeniu aplikacji, a nie walce z konfiguracją ekosystemu i kompilacją programu. Pobierz **`wizard.exe`** z 🚀[Releases](https://github.com/OpenCPLC/Wizard/releases) i umieść go w wybranym folderze, który będzie pełnił rolę przestrzeni roboczej _(workspace)_. Następnie otwórz konsolę [cmd](#-console) i wpisz:
+**Wizard** jest aplikacją konsolową usprawniającą pracę z **OpenCPLC**, którego zadaniem jest dostosowanie środowiska pracy tak, aby 👨‍💻programista-automatyk mógł skupić się na tworzeniu aplikacji, a nie walce z konfiguracją ekosystemu i kompilacją programu. Pobierz **`wizard.exe`** z 🚀[Releases](https://github.com/OpenCPLC/Wizard/releases) i umieść go w wybranym folderze, który będzie pełnił rolę przestrzeni roboczej _(workspace)_. Następnie otwórz konsolę [CMD](#-console) i wpisz:
 
 ```bash
 ./wizard.exe --new <project_name> -b <board>
@@ -32,11 +32,11 @@ niezbędne jest ponowne załadowanie projektu. Jeśli projekt jest już aktywny,
 ./wizard.exe -r
 ```
 
-Tutaj _(upraszczając_)_ kończy się zadanie programu `wizard.exe`, a dalsza praca przebiega tak samo jak w typowym projekcie **embedded systems**, czyli przy użyciu [**✨Make**](#-make)
+Tutaj _(upraszczając)_ kończy się zadanie programu `wizard.exe`, a dalsza praca przebiega tak samo jak w typowym projekcie **embedded systems**, czyli przy użyciu [**✨Make**](#-make)
 
 ## ✨ Make
 
-Jeżeli mamy poprawnie przygotowaną konfigurację projektu oraz plik `makefile` wygenerowany za pomocą programu 🔮**Wizard**, to aby zbudować i wgrać program na sterownik PLC, wystarczy otworzyć konsolę w przestrzeni roboczej i wpisać:
+Jeżeli mamy poprawnie przygotowaną konfigurację projektu oraz plik `makefile` wygenerowany za pomocą programu 🔮**Wizard**, to aby zbudować i wgrać program na sterownik PLC, wystarczy otworzyć konsolę w przestrzeni roboczej _(workspace)_ i wpisać:
 
 ```bash
 make build # build c projekt to binary program
@@ -103,17 +103,17 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-r --reload`: Pobiera nazwę projektu oraz określa, czy jest to przykład, na podstawie wcześniej wygenerowanego pliku `makefile`, a następnie generuje pliki projektowe na nowo. Wówczas nie jest wymagane podawania nazwy **`name`**
 - `-f --framework`: Wersja framework'a. Jeśli nie zostanie podana, zostanie odczytana z pola `version` w pliku konfiguracyjnym `wizard.json`. Format: `<major>.<minor>.<patch>` lub `latest`, `develop`, `main`. W tej wersji będą tworzone nowe projekty oraz ładowane przykłady.
 - `-b --board`: Model sterownika PLC dla nowego projektu. Oficjalnie wspierana konstrukcja `Uno`, `DIO`, `AIO`, `Eco`, `None` dla pracy z czystym mikrokontrolerem lub inna nazwa własna.
-- `-c --chip`: Wykorzystywany mikrokontroler: `STM32G081`, `STM32G0C1` w nowym projekcie. Dla oficjalnie wspieranych konstrukcji zostanie dobrany automatycznie, więc lepiej go nie podawać. Wybór wpływa na dostępną ilość pamięci FLASH [kB] i RAM [kB] na płytce oraz na dodawane pliki nagłówkowe.
-- `-m --user_memory`: Ilość zarezerwowanej pamięci FLASH [kB] na konfigurację i EEPROM w aplikacji. Powoduje zmniejszenie dostępnej pamięci na program w pliku linkera `flash.ld`.
+- `-c --chip`: Wykorzystywany mikrokontroler: `STM32G081`, `STM32G0C1` w nowym projekcie. Dla oficjalnie wspieranych konstrukcji zostanie dobrany automatycznie, więc lepiej go nie podawać. Wybór wpływa na dostępną ilość pamięci FLASH[kB] i RAM[kB] na płytce oraz na dodawane pliki nagłówkowe.
+- `-m --user_memory`: Ilość zarezerwowanej pamięci FLASH[kB] na konfigurację i EEPROM w aplikacji. Powoduje zmniejszenie dostępnej pamięci na program w pliku linkera `flash.ld`.
 - `-o --opt`: Poziom optymalizacji kodu dla kompilacji: `O0`, `Og`, `O1` _(default: `Og`)_. Poziomy optymalizacji `O2`, `O3` są niedozwolone!
 - `-l --list`: Wyświetla listę istniejących projektów lub przykładów, gdy aktywna jest flaga `-s --sample`.
 - `-i --info`: Zwraca podstawowe informacje o wskazanym lub aktywnym projekcie.  
 - `-u --update`: Sprawdza dostępność aktualizacji i aktualizuje program 🪄Wizard.  
-- `-v --version`: Wyświetla wersję programu 🔮Wizard oraz link do repozytorium. Wersja programu 🧙🏼‍♂️Wizard jest taka sama jak najnowsza wersja frameworka **OpenCPLC**.  
+- `-v --version`: Wyświetla wersję programu 🔮Wizard oraz link do repozytorium. Wersja programu jest taka sama jak najnowsza wersja frameworka **OpenCPLC**.  
 - `-vl --version_list`: Wyświetla wszystkie dostępne wersje frameworka.
 
 ### 📟 Console
 
-Programy 🧙🏼‍♂️Wizard oraz ✨Make są programami uruchamianymi z konsoli cmd. Stanowią niezbędnik do pracy z OpenCPLC.
+Programy 🧙🏼‍♂️Wizard oraz ✨Make są programami uruchamianymi z konsoli CMD. Stanowią niezbędnik do pracy z OpenCPLC.
 
-Konsola systemowa jest dostępna w wielu aplikacjach, takich jak **Command Prompt**, **PowerShell**, [**GIT Bash**](https://git-scm.com/downloads), a nawet terminal w [**VSCode**](https://code.visualstudio.com/). Gdy wywołanie w konsoli zwróci błąd, prawdopodobnie nie została otwarta w przestrzeni roboczej i nie widzi aplikacji `wizard.exe`. Możesz zamknąć konsolę i otworzyć ją w odpowiednim folderze lub przejść ręcznie, używając komendy `cd`.
+Konsola systemowa jest dostępna w wielu aplikacjach, takich jak **Command Prompt**, **PowerShell**, [**GIT Bash**](https://git-scm.com/downloads), a nawet terminal w [**VSCode**](https://code.visualstudio.com/). Gdy wywołanie w konsoli zwróci błąd, prawdopodobnie nie została otwarta w przestrzeni roboczej _(workspace)_ i nie widzi aplikacji `wizard.exe`. Możesz zamknąć konsolę i otworzyć ją w odpowiednim folderze lub przejść ręcznie, używając komendy `cd`.
