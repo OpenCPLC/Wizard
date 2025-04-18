@@ -71,7 +71,7 @@ Podczas pierwszego uruchomienia 🧙🏼‍♂️Wizard'a tworzony jest plik kon
 
 ### 🤔 How works?
 
-W pierwszej kolejności **Wizard** zainstaluje **GNU Arm Embedded Toolchain**, **OpenOCD**, **Make**, klienta **Git** oraz ustawi odpowiednio zmienne systemowe, jeżeli aplikacje nie są widoczne w systemie z poziomu konsoli. Jeżeli nie chcemy, aby ktoś grzebał w naszym systemie, możemy przygotować sobie [konfiguracje ręcznie](readme-install.md). Gdy 🪄**Wizard** zainstaluje brakujące aplikacje, poprosi o zresetowanie konsoli, ponieważ zmienne systemowe są ładowane podczas jej uruchamiania, a w procesie instlacji zostały dodane nowe.
+W pierwszej kolejności **Wizard** zainstaluje **GNU Arm Embedded Toolchain**, **OpenOCD**, **Make**, klienta **Git** oraz ustawi odpowiednio zmienne systemowe, jeżeli aplikacje nie są widoczne w systemie z poziomu konsoli. Jeżeli nie chcemy, aby ktoś grzebał w naszym systemie, możemy przygotować sobie [konfiguracje ręcznie](self-install.md). Gdy 🪄**Wizard** zainstaluje brakujące aplikacje, poprosi o zresetowanie konsoli, ponieważ zmienne systemowe są ładowane podczas jej uruchamiania, a w procesie instlacji zostały dodane nowe.
 
 Następnie, w razie konieczności, skopiuje framework OpenCPLC z [repozytorium](https://github.com/OpenCPLC/Framework) do folderu `${framework}` podanego w pliku konfiguracyjnym `wizard.json`. Zostanie sklonowana wersja z pliku konfiguracyjnego lub wskazana za pomocą `-f --framework`:
 
