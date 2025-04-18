@@ -14,5 +14,8 @@
       { "scope": "entity.name.function.preprocessor", "settings": { "foreground": "#68D" } },
       { "scope": "storage.modifier", "settings": { "foreground": "#9786c5" } }
     ]
+  },
+  "files.exclude": {
+    "**/__pycache__/": true
   }
 }

@@ -1,4 +1,5 @@
 NAME = ${NAME}
+TARGET = ${PREFIX}$(subst /,-,$(NAME))
 FW = ${FRAMEWORK_PATH}
 PRO = ${PROJECT_PATH}
 BUILD = ${BUILD_PATH}
@@ -48,9 +49,9 @@ LD_SCRIPT = ${LD_FILE}
 LIBS = -lc -lm -lnosys
 LIBDIR = 
 LDFLAGS = $(MCU) -specs=nano.specs -T$(LD_SCRIPT) $(LIBDIR) $(LIBS)
-LDFLAGS += -Wl,-Map=$(BUILD)/$(NAME).map,--cref -Wl,--gc-sections
+LDFLAGS += -Wl,--no-warn-rwx-segment,-Map=$(BUILD)/$(TARGET).map,--cref -Wl,--gc-sections
 
-all: $(BUILD)/$(NAME).elf $(BUILD)/$(NAME).hex $(BUILD)/$(NAME).bin
+all: $(BUILD)/$(TARGET).elf $(BUILD)/$(TARGET).hex $(BUILD)/$(TARGET).bin
 
 OBJECTS = $(patsubst %.c,$(BUILD)/%.o,$(C_SOURCES))
 C_DIRS := $(sort $(dir $(shell find . -name "*.c")))
@@ -71,7 +72,7 @@ $(BUILD)/%.o: %.c Makefile | $(dir $(BUILD)/%)
 $(BUILD)/%.o: %.s Makefile | $(dir $(BUILD)/%)
 	$(AS) -c $(CFLAGS) $< -o $@
 
-$(BUILD)/$(NAME).elf: $(OBJECTS) Makefile
+$(BUILD)/$(TARGET).elf: $(OBJECTS) Makefile
 	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 	$(SZ) $@
 
@@ -90,7 +91,7 @@ OPENOCD = ${OPENOCD_PATH}openocd -f interface/stlink.cfg -f target/stm32g0x.cfg 
 build: all
 
 flash:
-	$(OPENOCD) "program $(BUILD)/$(NAME).elf verify reset exit"
+	$(OPENOCD) "program $(BUILD)/$(TARGET).elf verify reset exit"
 
 run: all flash
 
@@ -99,8 +100,8 @@ clean:
 #	@if exist "$(BUILD)\\$(FW)" (cmd /c "rmdir /s /q $(BUILD)\\$(FW)")
 	if [ -d "$(BUILD)\\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(PRO); fi
 #	@if exist "$(BUILD)\\$(PRO)" (cmd /c "rmdir /s /q $(BUILD)\\$(PRO)")
-	@rm -f $(BUILD)/$(NAME).*
-#	@cmd /c "del /q $(BUILD)\\$(NAME).*
+	@rm -f $(BUILD)/$(TARGET).*
+#	@cmd /c "del /q $(BUILD)\\$(TARGET).*
 
 clr: clean
 
@@ -116,6 +117,6 @@ earse_real:
 
 .PHONY: all build flash run clean clr clean_all earse earse_real
 
--include $(wildcard $(BUILD)/$(NAME).d)
+-include $(wildcard $(BUILD)/$(TARGET).d)
 -include $(wildcard $(BUILD)/$(FW)/*.d)
 -include $(wildcard $(BUILD)/$(PRO)/*.d)

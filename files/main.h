@@ -12,9 +12,9 @@
 
 #define PRO_BOARD_${BOARD}
 #define PRO_CHIP_${CHIP}
-#define PRO_FRAMEWORK_VERSION  "${FRAMEWORK_VERSION}"
-#define PRO_USER_MEMORY_KB     ${USER_MEMORY}
-#define PRO_OPT_LEVEL          "${OPT_LEVEL}"
+#define PRO_VERSION         "${PROJECT_VERSION}"
+#define PRO_USER_MEMORY_KB  ${USER_MEMORY}
+#define PRO_OPT_LEVEL       "${OPT_LEVEL}"
 
 #endif
 
