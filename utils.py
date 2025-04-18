@@ -102,6 +102,12 @@ def Integer(value:str|int|None) -> int|None:
 
 #------------------------------------------------------------------------------
 
+def VersionCheck(version:str, versions:list[str], msg:str) -> bool:
+  if version not in versions:
+    print(f"{Ico.ERR} Wersja framework'a {Color.MAGENTA}{version}{Color.END} nie istnieje")
+    print(msg)
+    sys.exit(1)
+
 # def VersionEncode(version:str, hex=False) -> int|str:
 #   try:
 #     major, minor, patch = map(int, version.split("."))
@@ -178,7 +184,7 @@ def LinesClear(lines:list[str], comment:str="#"):
     lines_ok.append(current_line.replace("\\\\", "\\"))
   return lines_ok
 
-def GetVars(lines:list[str], prefix_list:list[str], sep="=", trim_start:str="") -> dict:
+def GetVars(lines:list[str], prefix_list:list[str], sep="=", trim_start:str="", required:str=True) -> dict:
   if trim_start:
     lines = [re.sub(f"^{re.escape(trim_start)}+", "", line).lstrip() for line in lines]
   filtered_lines = [s for s in lines if any(s.startswith(prefix) for prefix in prefix_list)]
@@ -190,10 +196,15 @@ def GetVars(lines:list[str], prefix_list:list[str], sep="=", trim_start:str="") 
       key = match.group(1).strip()
       value = match.group(2).strip().strip('"')
       variables[key] = value
+  if required:
+    for key in prefix_list:
+      if key not in variables:
+        print(f"{Ico.WRN} Nie znaleziono zmiennej {Color.MAGENTA}{key}{Color.END}")
+        return {}
   return variables
 
 def GetVar(lines:list[str], var_name:str, sep="=", trim_start:str="") -> dict|None:
-  vars =  GetVars(lines, [var_name])
+  vars = GetVars(lines, [var_name])
   return vars[var_name] if var_name in vars else None
 
 def LastLineLen(string:str) -> int:
@@ -223,7 +234,7 @@ def SwapCommentLines(content:str, comment:str="#", next_line:bool=False) -> str:
     i += 1
   return "\n".join(lines)
 
-def CreateFile(name:str, content:str, path:str="./", replace_map:dict={}, remove_line:str="", rewrite=False) -> str:
+def CreateFile(name:str, content:str, path:str="./", replace_map:dict={}, remove_line:str="", rewrite:bool=False, color:str=Color.ORANGE) -> str:
   file_name = xn.FixPath(f"{path}/{name}")
   content = content.strip()
   for pattern, value in replace_map.items():
@@ -231,7 +242,7 @@ def CreateFile(name:str, content:str, path:str="./", replace_map:dict={}, remove
   if remove_line: content = LineRemove(content, remove_line)
   xn.FILE.Save(file_name, content)
   suffix = "w prejekcie" if path == "." else f"w folderze {Color.GREY}{path}{Color.END}"
-  print(f"{Ico.OK} {"Nadpisano" if rewrite else "Utworzono"} plik {Color.ORANGE}{name}{Color.END} {suffix}")
+  print(f"{Ico.OK} {"Nadpisano" if rewrite else "Utworzono"} plik {color}{name}{Color.END} {suffix}")
   return file_name
 
 def GetProjectList(path:str) -> list[str]:
@@ -284,7 +295,7 @@ def Install(name:str, path:str|None=None, yes:bool=False):
     print(f"{Ico.ERR} Błąd podczas instalacji {Color.BLUE}{name}{Color.END}: {e}")
     sys.exit(1)
 
-def GitCloneRepo(url:str,path:str,ref:str|None=None) -> bool:
+def GitCloneRepo(url:str, path:str, ref:str|None=None) -> bool:
   cmd = ["git", "clone"]
   if ref: cmd += ["--branch", ref]
   cmd += [url, path]
@@ -327,16 +338,27 @@ def InstallMissingAddPath(name:str, cmd:str, var:str|None=None, yes:bool=False, 
     print(f"{Ico.OK} Program {Color.YELLOW}{cmd}{Color.END} jest zainstalowany w wersji {Color.BLUE}{version}{Color.END}")
   return version
 
-def GitCloneMissing(url: str, path:str, ref:str, yes:bool=False):
+def ColorUrl(url:str):
+  return url.replace("https://", f"{Color.GREY}https://{Color.END}").replace("OpenCPLC", f"{Color.TEAL}OpenCPLC{Color.END}")
+
+def GitCloneMissing(url:str, path:str, ref:str, yes:bool=False, required:bool=True) -> bool:
   if not xn.DIR.Exists(path):
     print(f"{Ico.WRN} Framework {Color.MAGENTA}opencplc{Color.END} nie jest zainstalowany w wersji {Color.BLUE}{ref}{Color.END}")
-    print(f"{Ico.INF} Czy zrobić to automatycznie? {YES_NO}:", end=" ")
     if not yes and not IsYes():
-      repo_path = f"{Color.GREY}https://{Color.END}github.com/{Color.TEAL}OpenCPLC{Color.END}/Framework"
-      print(f"{Ico.ERR} Zapoznaj się z instrukcją {repo_path}")
+      if not required: return False
+      print(f"{Ico.ERR} Możesz pobrać go samodzielnie z {ColorUrl(url)}")
       sys.exit(0)
     if not GitCloneRepo(url, path, ref):
       print(f"{Ico.ERR} Próba sklonowania repozytorium {Color.ORANGE}{url}{Color.END} nie powiodła się")
       sys.exit(1)
     print(f"{Ico.OK} Repozytorium {Color.ORANGE}{url}{Color.END} zostało sklonowane do {Color.GREY}{xn.LocalPath(path)}{Color.END}")
+  return True
 
+def AssignName(name:str|bool|None, flag:str|bool|None, msg:str):
+  if type(flag) == str:
+    if not name: name = flag
+    elif name != flag:
+      print(f"{Ico.ERR} Nie możesz przekazać nazwy projektu jako parametr domyślny oraz wartości flagi {msg}")
+      sys.exit(1)
+    flag = True
+  return name, flag

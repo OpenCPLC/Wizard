@@ -399,6 +399,23 @@ def SplitSQL(sqls):
 def isUniform(lst:Iterable):
   return len(set(lst)) == 1
 
+#------------------------------------------------------------------------------ Dict
+
+class DICT():
+
+  def FindMissingKeys(template:dict, subject:dict, prefix:str=""):
+    missing = []
+    for key in template:
+      path = f"{prefix}.{key}" if prefix else key
+      if key not in subject:
+        missing.append(path)
+      else:
+        tval = template[key]
+        sval = subject[key]
+        if hasattr(tval, "keys") and hasattr(sval, "keys"):
+          missing += DICT.FindMissingKeys(tval, sval, path)
+    return missing
+
 #------------------------------------------------------------------------------ Colors
 
 class Color():
