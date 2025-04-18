@@ -1,6 +1,6 @@
 ## 🔮 Wizard
 
-**Wizard** jest aplikacją konsolową usprawniającą pracę z **OpenCPLC**, którego zadaniem jest dostosowanie środowiska pracy tak, aby 👨‍💻programista-automatyk mógł skupić się na tworzeniu aplikacji, a nie walce z konfiguracją ekosystemu i kompilacją programu. Pobierz **`wizard.exe`** z 🚀[Releases](https://github.com/OpenCPLC/Wizard/releases) i umieść go w wybranym folderze, który będzie pełnił rolę przestrzeni roboczej _(workspace)_. Następnie otwórz konsolę [cmd](#-console) i wpisz:
+**Wizard** jest aplikacją konsolową usprawniającą pracę z **OpenCPLC**, którego zadaniem jest dostosowanie środowiska pracy tak, aby 👨‍💻programista-automatyk mógł skupić się na tworzeniu aplikacji, a nie walce z konfiguracją ekosystemu i kompilacją programu. Pobierz **`wizard.exe`** z 🚀[Releases](https://github.com/OpenCPLC/Wizard/releases) i umieść go w wybranym folderze, który będzie pełnił rolę przestrzeni roboczej _(workspace)_. Następnie otwórz konsolę [CMD](#-console) i wpisz:
 
 ```bash
 ./wizard.exe --new <project_name> -b <board>
@@ -109,11 +109,11 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-l --list`: Wyświetla listę istniejących projektów lub przykładów, gdy aktywna jest flaga `-s --sample`.
 - `-i --info`: Zwraca podstawowe informacje o wskazanym lub aktywnym projekcie.  
 - `-u --update`: Sprawdza dostępność aktualizacji i aktualizuje program 🪄Wizard.  
-- `-v --version`: Wyświetla wersję programu 🔮Wizard oraz link do repozytorium. Wersja programu 🧙🏼‍♂️Wizard jest taka sama jak najnowsza wersja frameworka **OpenCPLC**.  
+- `-v --version`: Wyświetla wersję programu 🔮Wizard oraz link do repozytorium. Wersja programu jest taka sama jak najnowsza wersja frameworka **OpenCPLC**.  
 - `-vl --version_list`: Wyświetla wszystkie dostępne wersje frameworka.
 
 ### 📟 Console
 
-Programy 🧙🏼‍♂️Wizard oraz ✨Make są programami uruchamianymi z konsoli cmd. Stanowią niezbędnik do pracy z OpenCPLC.
+Programy 🧙🏼‍♂️Wizard oraz ✨Make są programami uruchamianymi z konsoli CMD. Stanowią niezbędnik do pracy z OpenCPLC.
 
 Konsola systemowa jest dostępna w wielu aplikacjach, takich jak **Command Prompt**, **PowerShell**, [**GIT Bash**](https://git-scm.com/downloads), a nawet terminal w [**VSCode**](https://code.visualstudio.com/). Gdy wywołanie w konsoli zwróci błąd, prawdopodobnie nie została otwarta w przestrzeni roboczej i nie widzi aplikacji `wizard.exe`. Możesz zamknąć konsolę i otworzyć ją w odpowiednim folderze lub przejść ręcznie, używając komendy `cd`.
