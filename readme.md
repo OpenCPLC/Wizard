@@ -103,8 +103,8 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-r --reload`: Pobiera nazwę projektu oraz określa, czy jest to przykład, na podstawie wcześniej wygenerowanego pliku `makefile`, a następnie generuje pliki projektowe na nowo. Wówczas nie jest wymagane podawania nazwy **`name`**
 - `-f --framework`: Wersja framework'a. Jeśli nie zostanie podana, zostanie odczytana z pola `version` w pliku konfiguracyjnym `wizard.json`. Format: `<major>.<minor>.<patch>` lub `latest`, `develop`, `main`. W tej wersji będą tworzone nowe projekty oraz ładowane przykłady.
 - `-b --board`: Model sterownika PLC dla nowego projektu. Oficjalnie wspierana konstrukcja `Uno`, `DIO`, `AIO`, `Eco`, `None` dla pracy z czystym mikrokontrolerem lub inna nazwa własna.
-- `-c --chip`: Wykorzystywany mikrokontroler: `STM32G081`, `STM32G0C1` w nowym projekcie. Dla oficjalnie wspieranych konstrukcji zostanie dobrany automatycznie, więc lepiej go nie podawać. Wybór wpływa na dostępną ilość pamięci FLASH [kB] i RAM [kB] na płytce oraz na dodawane pliki nagłówkowe.
-- `-m --user_memory`: Ilość zarezerwowanej pamięci FLASH [kB] na konfigurację i EEPROM w aplikacji. Powoduje zmniejszenie dostępnej pamięci na program w pliku linkera `flash.ld`.
+- `-c --chip`: Wykorzystywany mikrokontroler: `STM32G081`, `STM32G0C1` w nowym projekcie. Dla oficjalnie wspieranych konstrukcji zostanie dobrany automatycznie, więc lepiej go nie podawać. Wybór wpływa na dostępną ilość pamięci FLASH[kB] i RAM[kB] na płytce oraz na dodawane pliki nagłówkowe.
+- `-m --user_memory`: Ilość zarezerwowanej pamięci FLASH[kB] na konfigurację i EEPROM w aplikacji. Powoduje zmniejszenie dostępnej pamięci na program w pliku linkera `flash.ld`.
 - `-o --opt`: Poziom optymalizacji kodu dla kompilacji: `O0`, `Og`, `O1` _(default: `Og`)_. Poziomy optymalizacji `O2`, `O3` są niedozwolone!
 - `-l --list`: Wyświetla listę istniejących projektów lub przykładów, gdy aktywna jest flaga `-s --sample`.
 - `-i --info`: Zwraca podstawowe informacje o wskazanym lub aktywnym projekcie.  
