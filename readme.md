@@ -32,7 +32,7 @@ niezbędne jest ponowne załadowanie projektu. Jeśli projekt jest już aktywny,
 ./wizard.exe -r
 ```
 
-Tutaj _(upraszczając_)_ kończy się zadanie programu `wizard.exe`, a dalsza praca przebiega tak samo jak w typowym projekcie **embedded systems**, czyli przy użyciu [**✨Make**](#-make)
+Tutaj _(upraszczając)_ kończy się zadanie programu `wizard.exe`, a dalsza praca przebiega tak samo jak w typowym projekcie **embedded systems**, czyli przy użyciu [**✨Make**](#-make)
 
 ## ✨ Make
 
