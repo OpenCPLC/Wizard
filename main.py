@@ -5,7 +5,7 @@ from datetime import datetime
 class Ico(xn.IcoText): pass
 class Color(xn.Color): pass
 
-VER = "0.0.0"
+VER = "0.0.1"
 
 def HandleSigint(signum, frame):
   print(f"{Ico.WRN} Zamykanie aplikacji {Color.GREY}(Ctrl+C){Color.END}...")
@@ -94,6 +94,7 @@ class flag():
 exit_flag = False
 
 if args.version:
+  # 0.0.1: Launch fix
   # 0.0.0: Beta init
   print(f"OpenCPLC Wizard {Color.BLUE}{VER}{Color.END}")
   print(utils.ColorUrl("https://github.com/OpenCPLC/Wizard"))
