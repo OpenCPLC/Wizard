@@ -1,6 +1,8 @@
-import winreg, os, sys, subprocess, re
-import urllib.request, zipfile, io
+import winreg, os, sys, subprocess, re, json
+import urllib.request, urllib.parse, zipfile, io
 from datetime import datetime
+from packaging.version import parse as parse_version
+from typing import Literal
 import xaeian as xn
 
 class Ico(xn.IcoText): pass
@@ -304,13 +306,7 @@ def GitCloneRepo(url:str, path:str, ref:str|None=None) -> bool:
 
 def ProgramVersion(name:str) -> str|None:
   try:
-    result = subprocess.run(
-      [name, '--version'],
-      stdout=subprocess.PIPE,
-      stderr=subprocess.PIPE,
-      check=True,
-      text=True
-    )
+    result = subprocess.run([name, '--version'], capture_output=True, check=True, text=True)
     output = result.stdout + result.stderr
     match = re.search(r'\b\d+\.\d+\.\d+\b', output)
     if match:
@@ -353,6 +349,27 @@ def GitCloneMissing(url:str, path:str, ref:str, yes:bool=False, required:bool=Tr
       sys.exit(1)
     print(f"{Ico.OK} Repozytorium {Color.ORANGE}{url}{Color.END} zostało sklonowane do {Color.GREY}{xn.LocalPath(path)}{Color.END}")
   return True
+
+def GitGetRef(url: str, option: Literal["--heads", "--tags", "--ref"] = "--ref", use_git: bool = True):
+  if option == "--ref": return GitGetRef(url, "--tags", use_git) + GitGetRef(url, "--heads", use_git)
+  if use_git:
+    result = subprocess.run(["git", "ls-remote", option, url], capture_output=True, text=True)
+    lines = result.stdout.strip().splitlines()
+    rx = r"refs/tags/([^\^{}]+)$" if option == "--tags" else r"refs/heads/(.+)$"
+    refs = [re.search(rx, l).group(1) for l in lines if re.search(rx, l)]
+    return sorted(refs, key=parse_version, reverse=True) if option == "--tags" else refs
+  host = "github" if "github.com" in url else "gitlab" if "gitlab.com" in url else None
+  if not host:
+    raise ValueError("Obsługiwane tylko GitHub/GitLab")
+  repo = url.replace(f"https://{host}.com/", "").rstrip("/")
+  api = f"https://{host}.com/api/v4/projects/{urllib.parse.quote_plus(repo)}" if host == "gitlab" else f"https://api.github.com/repos/{repo}"
+  endpoint = "/repository/tags" if host == "gitlab" and option == "--tags" else \
+    "/repository/branches" if host == "gitlab" else \
+    "/tags" if option == "--tags" else "/branches"
+  data = subprocess.run(["curl", "-s", api + endpoint], capture_output=True, text=True).stdout
+  out = json.loads(data)
+  names = [x["name"] for x in out]
+  return sorted(names, key=parse_version, reverse=True) if option == "--tags" else names
 
 def AssignName(name:str|bool|None, flag:str|bool|None, msg:str):
   if type(flag) == str:

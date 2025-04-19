@@ -1,11 +1,59 @@
-import sys, argparse
+import signal, sys, argparse
 import xaeian as xn, utils
 from datetime import datetime
 
-VERSIONS = ["develop"]
-
 class Ico(xn.IcoText): pass
 class Color(xn.Color): pass
+
+def HandleSigint(signum, frame):
+  print(f"{Ico.WRN} Zamykanie aplikacji {Color.GREY}(Ctrl+C){Color.END}...")
+  sys.exit(0)
+
+signal.signal(signal.SIGINT, HandleSigint)
+
+#------------------------------------------------------------------------------
+
+xn.FIX_PATH = True
+xn.ONEFILE_PACK = True
+
+class sf(): # startup files
+  wizard_json_dict = xn.JSON.Load("files/wizard.json")
+  makefile = xn.FILE.Load("files/makefile")
+  flash_ld = xn.FILE.Load("files/flash.ld")
+  properties_json = xn.FILE.Load("files/properties.json")
+  launch_json = xn.FILE.Load("files/launch.json")
+  tasks_json = xn.FILE.Load("files/tasks.json")
+  settings_json = xn.FILE.Load("files/settings.json")
+  extensions_json = xn.FILE.Load("files/extensions.json")
+  main_h = xn.FILE.Load("files/main.h")
+  main_c = xn.FILE.Load("files/main.c")
+  main_none_c = xn.FILE.Load("files/main-none.c")
+
+xn.ONEFILE_PACK = False
+
+#------------------------------------------------------------------------------
+
+wizard_config = xn.JSON.Load("wizard.json") or sf.wizard_json_dict
+missing = xn.DICT.FindMissingKeys(sf.wizard_json_dict, wizard_config)
+if missing:
+  print(f"{Ico.ERR} W pliku konfiguracyjnym {Color.ORANGE}wizard.json{Color.END} nie określono {Color.BLUE}{missing[0]}{Color.END}")
+  sys.exit(1)
+  
+framework_url = "https://github.com/OpenCPLC/Framework"
+versions = utils.GitGetRef(framework_url, "--ref", use_git=True)
+if versions: wizard_config["versions"] = versions
+else:
+  print(f"{Ico.WRN} Brak dostępu do internetu lub serwis {Color.BLUE}GitHub{Color.END} nie odpowiada")
+  if "versions" not in wizard_config:
+    print(f"{Ico.ERR} Pierwsze uruchomienie nie powiedzie się bez dostępu do zasobów zdalnych")
+    sys.exit(1)
+  wizard_config["versions"] = wizard_config["versions"]
+
+print(wizard_config)
+xn.JSON.SavePretty("wizard.json", wizard_config)
+wizard_config["version"] = utils.FrameworkTrueVersion(wizard_config["version"], wizard_config["versions"][0])
+
+#------------------------------------------------------------------------------
 
 parser = argparse.ArgumentParser(description="OpenPLC project wizard")
 parser.add_argument("name", type=str, nargs="?", help="Nazwa projektu", default="")
@@ -13,6 +61,7 @@ parser.add_argument("-n", "--new", type=str, nargs="?", help="Utwórz nowy proje
 parser.add_argument("-s", "--sample", type=str, nargs="?", help="Wczytuje przykład demonstracyjny o wskazanej nazwie", const=True)
 parser.add_argument("-r", "--reload", action="store_true", help="Przeładowuje aktualnie aktywny projekt. Nie wymaga podawania nazwy {name}", default=False)
 parser.add_argument("-f", "--framework", type=str, nargs="?", help=f"Wersja framework'a OpenCPLC, format: <major>.<minor>.<patch> lub (latest, develop, main)")
+parser.add_argument("-fl", "--framework_list", action="store_true", help="Wyświetla wszystkie dostępne wersje framework'a OpenCPLC", default=False)
 parser.add_argument("-b", "--board", type=str, nargs="?", help="Model sterownika PLC (Uno, DIO, AIO, Eco, None, ...)")
 parser.add_argument("-c", "--chip", type=str, nargs="?", help="Wykorzystywany mikrokontroler (STM32G081, STM32G0C1). Wybór wpływa na dostępną ilość pamięci FLASH[kB] i RAM[kB] na płytce")
 parser.add_argument("-m", "--user_memory", type=int, nargs="?", help="Ilość zarezerwowanej pamięci FLASH[kB] na konfigurację i EEPROM w aplikacji", default=0)
@@ -21,7 +70,6 @@ parser.add_argument("-l", "--list", action="store_true", help="Wyświetla listę
 parser.add_argument("-i", "--info", action="store_true", help="Zwraca podstawowe informacje o projekcie", default=False)
 parser.add_argument("-u", "--update", action="store_true", help="Sprawdza dostępność aktualizacji i aktualizuje program Wizard", default=False)
 parser.add_argument("-v", "--version", action="store_true", help="Wersję programu 'wizard' oraz link do repozytorium", default=False)
-parser.add_argument("-vl", "--version_list", action="store_true", help="Wyświetla wszystkie dostępne wersje frameworka", default=False)
 parser.add_argument("-y", "--yes", action="store_true", help="Automatycznie potwierdza wszystkie operacje", default=False)
 parser.add_argument("-hl", "--hash_list", nargs="+", type=str, help="[Hash] Lista tagów do za-hash'owania")
 parser.add_argument("-ht", "--hash_title", type=str, help="[Hash] Tytół dla enum'a, który zostanie utworzony z listy hash'ów", default="")
@@ -32,29 +80,31 @@ class flag():
   r = f"{Color.YELLOW}-r{Color.END} {Color.GREY}--reload{Color.END}"
   s = f"{Color.YELLOW}-s{Color.END} {Color.GREY}--sample{Color.END}"
   f = f"{Color.YELLOW}-f{Color.END} {Color.GREY}--framework{Color.END}"
+  fl = f"{Color.YELLOW}-fl{Color.END} {Color.GREY}--framework_list{Color.END}"
   b = f"{Color.YELLOW}-b{Color.END} {Color.GREY}--board{Color.END}"
   c = f"{Color.YELLOW}-c{Color.END} {Color.GREY}--chip{Color.END}"
   m = f"{Color.YELLOW}-m{Color.END} {Color.GREY}--user-memory{Color.END}"
   o = f"{Color.YELLOW}-o{Color.END} {Color.GREY}--opt-level{Color.END}"
-  vl = f"{Color.YELLOW}-vl{Color.END} {Color.GREY}--version-list{Color.END}"
+
 
 #------------------------------------------------------------------------------ Print
 
 exit_flag = False
 
 if args.version:
+  VER = "0.0.0"
   # 0.0.0: Beta init
-  print(f"OpenCPLC Wizard {Color.BLUE}{VERSIONS[0]}{Color.END}")
+  print(f"OpenCPLC Wizard {Color.BLUE}{VER}{Color.END}")
   print(utils.ColorUrl("https://github.com/OpenCPLC/Wizard"))
   exit_flag = True
 
-if args.version_list:
+if args.framework_list:
   msg = f"Framework Versions: "
   latest = f" {Color.GREY}(latest){Color.END}"
   color = Color.BLUE
-  for ver in VERSIONS:
+  for ver in wizard_config["versions"]:
     msg += f"{color}{ver}{Color.END}{latest}, "
-    color = Color.TEAL
+    color = Color.CYAN
     latest = ""
   msg = msg.rstrip(", ")
   print(msg)
@@ -96,34 +146,14 @@ if utils.RESET_CONSOLE:
 
 #------------------------------------------------------------------------------ Load
 
-xn.FIX_PATH = True
-xn.ONEFILE_PACK = True
-
-class sf(): # startup files
-  wizard_json = xn.FILE.Load("files/wizard.json")
-  wizard_dict = xn.JSON.Load("files/wizard.json")
-  makefile = xn.FILE.Load("files/makefile")
-  flash_ld = xn.FILE.Load("files/flash.ld")
-  properties_json = xn.FILE.Load("files/properties.json")
-  launch_json = xn.FILE.Load("files/launch.json")
-  tasks_json = xn.FILE.Load("files/tasks.json")
-  settings_json = xn.FILE.Load("files/settings.json")
-  extensions_json = xn.FILE.Load("files/extensions.json")
-  main_h = xn.FILE.Load("files/main.h")
-  main_c = xn.FILE.Load("files/main.c")
-  main_none_c = xn.FILE.Load("files/main-none.c")
-
-xn.ONEFILE_PACK = False
-
-if not xn.FILE.Exists("wizard.json"):
-  xn.FILE.Save("wizard.json", sf.wizard_json)
-wizard_config = xn.JSON.Load("wizard.json")
-wizard_config["version"] = utils.FrameworkTrueVersion(wizard_config["version"], VERSIONS[0])
-
-missing = xn.DICT.FindMissingKeys(sf.wizard_dict, wizard_config)
-if missing:
-  print(f"{Ico.ERR} W pliku konfiguracyjnym {Color.ORANGE}wizard.json{Color.END} nie określono {Color.BLUE}{missing[0]}{Color.END}")
-  sys.exit(1)
+CFG = { "framework-version": args.framework or wizard_config["version"] }
+PATH = wizard_config["paths"]
+PATH["fw"] = PATH["framework"] + "/" + CFG["framework-version"]
+PATH["samples"] = PATH["fw"] + "/res/samples"
+PRO = utils.GetProjectList(PATH["projects"])
+SAM = utils.GetProjectList(PATH["samples"])
+utils.VersionCheck(CFG["framework-version"], wizard_config["versions"], f"{Ico.RUN} Sprawdź listę dostępnych wersji za pomocą flagi {flag.fl}")
+utils.GitCloneMissing(framework_url, PATH["fw"], CFG["framework-version"], args.yes)
 
 make_info = None
 if xn.FILE.Exists("makefile"):
@@ -132,17 +162,6 @@ if xn.FILE.Exists("makefile"):
   make_info = utils.GetVars(lines, ["NAME", "FW", "PRO"])
 
 #------------------------------------------------------------------------------
-
-CFG = { "name": args.name or make_info["NAME"] }
-CFG["framework-version"] = args.framework or wizard_config["version"]
-utils.VersionCheck(CFG["framework-version"], VERSIONS, f"{Ico.RUN} Sprawdź listę dostępnych wersji za pomocą flagi {flag.vl}")
-PATH = wizard_config["paths"]
-PATH["fw"] = PATH["framework"] + "/" + CFG["framework-version"]
-PATH["samples"] = PATH["fw"] + "/res/samples"
-PRO = utils.GetProjectList(PATH["projects"])
-SAM = utils.GetProjectList(PATH["samples"])
-framework_url = "https://github.com/OpenCPLC/Framework"
-utils.GitCloneMissing(framework_url, PATH["fw"], CFG["framework-version"], args.yes)
 
 if args.list:
   LIST = SAM if args.sample else PRO
@@ -160,23 +179,25 @@ if args.list:
 
 #------------------------------------------------------------------------------
 
-if not args.name:
-  if args.reload or args.info:
-    if make_info is None:
-      print(f"{Ico.ERR} Nie znaleziono pliku {Color.ORANGE}makefile{Color.END}, który jest wymagany do przeładowania projektu")
-      print(f"{Ico.INF} W takim przypadku należy podać jego nazwę jako argument domyślny")
-      sys.exit(1)
-    if not make_info:
-      print(f"{Ico.ERR} Plik {Color.ORANGE}makefile{Color.END} zawiera niezdefiniowane zmienne")
-      print(f"{Ico.INF} W takim przypadku nie możesz zkorzystać z oipcji ")
-      sys.exit(1)
-    if make_info["PRO"].startswith(make_info["FW"]): args.sample = True
-  else:
-    print(f"{Ico.ERR} Nazwa {Color.YELLOW}name{Color.END} projektu nie została określona")
-    print(f"{Ico.INF} Dotyczy to zarówno przełączenia się na istniejący projekt, jak i tworzenia nowego za pomocą flagi {flag.n}")
-    print(f"{Ico.RUN} Gdy chcesz przeładować aktywny projekt, dodaj do wywołania flagę {flag.r}")
-    sys.exit(1)
+if not args.name and not args.reload and not args.info:
+  print(f"{Ico.ERR} Nazwa {Color.YELLOW}name{Color.END} projektu nie została określona")
+  print(f"{Ico.INF} Dotyczy to zarówno przełączenia się na istniejący projekt, jak i tworzenia nowego za pomocą flagi {flag.n}")
+  print(f"{Ico.RUN} Gdy chcesz przeładować aktywny projekt, dodaj do wywołania flagę {flag.r}")
+  sys.exit(1)
 
+if not args.name and (args.reload or args.info):
+  if make_info is None:
+    print(f"{Ico.ERR} Nie znaleziono pliku {Color.ORANGE}makefile{Color.END}, który jest wymagany do przeładowania projektu")
+    print(f"{Ico.INF} W takim przypadku należy podać jego nazwę jako argument domyślny")
+    sys.exit(1)
+  if not make_info:
+    print(f"{Ico.ERR} Plik {Color.ORANGE}makefile{Color.END} zawiera niezdefiniowane zmienne")
+    print(f"{Ico.INF} W takim przypadku nie możesz zkorzystać z oipcji ")
+    sys.exit(1)
+  if make_info["PRO"].startswith(make_info["FW"]): args.sample = True
+  args.name = make_info["NAME"]
+
+CFG["name"] = args.name
 PATH["pro"] = PATH["projects"] + "/" + CFG["name"]
 
 #------------------------------------------------------------------------------
@@ -232,7 +253,7 @@ else:
   CFG["opt-level"] = info["PRO_OPT_LEVEL"]
   CFG["log-level"] = info["LOG_LEVEL"]
   CFG["freq"] = info["SYS_CLOCK_FREQ"]
-  utils.VersionCheck(CFG["project-version"], VERSIONS,
+  utils.VersionCheck(CFG["project-version"], wizard_config["versions"],
     f"{Ico.ERR} Definicja {Color.BLUE}PRO_VERSION{Color.END} z pliku {Color.ORANGE}main.h{Color.END} jest nie poprawna"
   )
   fw = PATH["framework"] + "/" + CFG["project-version"]
