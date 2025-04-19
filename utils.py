@@ -118,7 +118,7 @@ def VersionCheck(version:str, versions:list[str], msg:str) -> bool:
 #   except ValueError:
 #     raise ValueError(f"Invalid version format: {version}, expect: 'major.minor.patch'")
 
-# def VersionDecode(encoded_version:int|str) -> str:
+# def VersionDecode(encoded_versiWon:int|str) -> str:
 #   if isinstance(encoded_version, str):
 #     if encoded_version.lower().startswith("0x"):
 #       encoded_version = int(encoded_version, 16)
@@ -129,7 +129,7 @@ def VersionCheck(version:str, versions:list[str], msg:str) -> bool:
 #   patch = encoded_version & 0xFFFF
 #   return f"{major}.{minor}.{patch}"
 
-def FrameworkTrueVersion(framework_version:str, latest_version:str):
+def VersionReal(framework_version:str, latest_version:str):
   if framework_version in ["latest", "last"]: framework_version = latest_version
   elif framework_version in ["dev", "develop"]: framework_version = "develop"
   elif framework_version in ["main", "master"]: framework_version = "main"
@@ -269,30 +269,28 @@ def LastModification(path:str="./") -> str:
 
 #------------------------------------------------------------------------------ Remote
 
-FTP_PATH = "http://sqrt.pl"
-INSTALL_PATH = "C:\\"
-YES_NO = f"[{Color.GREEN}TAK{Color.END}/{Color.RED}NIE{Color.END}]"
-
 def IsYes(msg:str="Czy zrobić to automatycznie"):
+  YES_NO = f"[{Color.GREEN}TAK{Color.END}/{Color.RED}NIE{Color.END}]"
   print(f"{Ico.INF} {msg}? {YES_NO}:", end=" ")
   yes = input().lower()
   return yes == "tak" or yes == "t" or yes == "true" or yes == "yes" or yes == "y"
 
-def Install(name:str, path:str|None=None, yes:bool=False):
-  if path is path: path = INSTALL_PATH
-  print(f"{Ico.WRN} Program {Color.BLUE}{name}{Color.END} nie jest zainstalowany")
+def Install(name:str, url:str, path:str, yes:bool=False, unpack_zip:bool=True):
   if not yes and not IsYes():
-    repo_path = f"{Color.GREY}https://{Color.END}github.com/{Color.TEAL}OpenCPLC{Color.END}/Wizard"
-    print(f"{Ico.ERR} Zapoznaj się z instrukcją {repo_path}")
-    sys.exit(0)
+    print(f"{Ico.ERR} Zapoznaj się z instrukcją https://github.com/OpenCPLC/Wizard")
+    sys.exit(1)
   try:
-    url = f"{FTP_PATH}/{name}.zip"
-    response = urllib.request.urlopen(url)
-    zip_content = response.read()
-    with zipfile.ZipFile(io.BytesIO(zip_content)) as zip_ref:
-      xn.DIR.Create(f"{path}\\{name}")
-      zip_ref.extractall(f"{path}\\{name}")
-      print(f"{Ico.OK} Instalacja zakończona powodzeniem")
+    url = f"{url}/{name}.zip" if unpack_zip else f"{url}/{name}"
+    data = urllib.request.urlopen(url).read()
+    xn.DIR.Create(path)
+    path = xn.FixPath(f"{path}/{name}")
+    if unpack_zip:
+      xn.DIR.Create(path)
+      zipfile.ZipFile(io.BytesIO(data)).extractall(path)
+    else:
+      with open(path, "wb") as f:
+        f.write(data)
+    print(f"{Ico.OK} Instalacja zakończona powodzeniem")
   except Exception as e:
     print(f"{Ico.ERR} Błąd podczas instalacji {Color.BLUE}{name}{Color.END}: {e}")
     sys.exit(1)
@@ -315,12 +313,16 @@ def ProgramVersion(name:str) -> str|None:
   except Exception:
     return None
 
+FTP_PATH = "http://sqrt.pl"
+INSTALL_PATH = "C:\\"
 RESET_CONSOLE = False
+
 def InstallMissingAddPath(name:str, cmd:str, var:str|None=None, yes:bool=False, print_version:bool=False) -> str|None:
   global RESET_CONSOLE
   version = ProgramVersion(cmd)
   if not version:
-    Install(name, yes=yes)
+    print(f"{Ico.WRN} Program {Color.BLUE}{name}{Color.END} nie jest zainstalowany")
+    Install(name, FTP_PATH, INSTALL_PATH, yes)
     path = f"{INSTALL_PATH}\\{name}\\bin"
     if var: ENV.AddVariable(var, path)
     if not ENV.PathExist(path):

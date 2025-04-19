@@ -1,6 +1,7 @@
 */
 !files/
 *.spec
+*.exe
 /wizard.json
 /makefile
 /flash.ld
