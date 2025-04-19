@@ -96,17 +96,17 @@ flash:
 run: all flash
 
 clean:
-	if [ -d "$(BUILD)\\$(FW)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(FW); fi
+	@if [ -d "$(BUILD)\\$(FW)" ]; then rm -rf "$(BUILD)\\$(FW)"; fi
 #	@if exist "$(BUILD)\\$(FW)" (cmd /c "rmdir /s /q $(BUILD)\\$(FW)")
-	if [ -d "$(BUILD)\\$(PRO)" ]; then cmd /c rmdir /s /q $(BUILD)\\$(PRO); fi
+	@if [ -d "$(BUILD)\\$(PRO)" ]; then rm -rf "$(BUILD)\\$(PRO)"; fi
 #	@if exist "$(BUILD)\\$(PRO)" (cmd /c "rmdir /s /q $(BUILD)\\$(PRO)")
-	@rm -f $(BUILD)/$(TARGET).*
+	@find $(BUILD) -type f -name '$(TARGET).*' -exec rm -f {} +
 #	@cmd /c "del /q $(BUILD)\\$(TARGET).*
 
 clr: clean
 
 clean_all:
-	if [ -d "$(BUILD)" ]; then cmd /c rmdir /s /q $(BUILD); fi
+	@if [ -d "$(BUILD)" ]; then rm -rf "$(BUILD)"; fi
 #	@if exist "$(BUILD)" (cmd /c "rmdir /s /q $(BUILD)")
 
 earse:

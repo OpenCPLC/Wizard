@@ -1,7 +1,7 @@
 import winreg, os, sys, subprocess, re, json
 import urllib.request, urllib.parse, zipfile, io
 from datetime import datetime
-from packaging.version import parse as parse_version
+import packaging.version
 from typing import Literal
 import xaeian as xn
 
@@ -104,7 +104,7 @@ def Integer(value:str|int|None) -> int|None:
 
 #------------------------------------------------------------------------------
 
-def VersionCheck(version:str, versions:list[str], msg:str) -> bool:
+def FrameworkVersionCheck(version:str, versions:list[str], msg:str) -> bool:
   if version not in versions:
     print(f"{Ico.ERR} Wersja framework'a {Color.MAGENTA}{version}{Color.END} nie istnieje")
     print(msg)
@@ -134,6 +134,9 @@ def VersionReal(framework_version:str, latest_version:str):
   elif framework_version in ["dev", "develop"]: framework_version = "develop"
   elif framework_version in ["main", "master"]: framework_version = "main"
   return framework_version
+
+def VersionOlderThan(a:str, b:str) -> bool:
+  return packaging.version.Version(a) < packaging.version.Version(b)
 
 #------------------------------------------------------------------------------
 
@@ -282,7 +285,7 @@ def Install(name:str, url:str, path:str, yes:bool=False, unpack_zip:bool=True):
   try:
     url = f"{url}/{name}.zip" if unpack_zip else f"{url}/{name}"
     data = urllib.request.urlopen(url).read()
-    xn.DIR.Create(path)
+    xn.DIR.Create(path + "/")
     path = xn.FixPath(f"{path}/{name}")
     if unpack_zip:
       xn.DIR.Create(path)
@@ -314,10 +317,10 @@ def ProgramVersion(name:str) -> str|None:
     return None
 
 FTP_PATH = "http://sqrt.pl"
-INSTALL_PATH = "C:\\"
+INSTALL_PATH = "C:"
 RESET_CONSOLE = False
 
-def InstallMissingAddPath(name:str, cmd:str, var:str|None=None, yes:bool=False, print_version:bool=False) -> str|None:
+def InstallMissingAddPath(name:str, cmd:str, var:str|None=None, yes:bool=False, min_version:str="") -> str|None:
   global RESET_CONSOLE
   version = ProgramVersion(cmd)
   if not version:
@@ -332,8 +335,9 @@ def InstallMissingAddPath(name:str, cmd:str, var:str|None=None, yes:bool=False, 
         print(f"{Ico.ERR} Błąd podczas dodawania ścieżki dla {Color.YELLOW}{cmd}{Color.END} do zmiennych środowiskowych")
         sys.exit(1)
       RESET_CONSOLE = True
-  elif print_version:
-    print(f"{Ico.OK} Program {Color.YELLOW}{cmd}{Color.END} jest zainstalowany w wersji {Color.BLUE}{version}{Color.END}")
+  elif min_version and VersionOlderThan(version, min_version):
+    print(f"{Ico.WRN} Program {Color.YELLOW}{cmd}{Color.END} jest zainstalowany w wersji {Color.ORANGE}{version}{Color.END}")
+    print(f"{Ico.WRN} Wymagana minimalna wersja to {Color.BLUE}{min_version}{Color.END}")
   return version
 
 def ColorUrl(url:str):
@@ -359,7 +363,7 @@ def GitGetRef(url: str, option: Literal["--heads", "--tags", "--ref"] = "--ref",
     lines = result.stdout.strip().splitlines()
     rx = r"refs/tags/([^\^{}]+)$" if option == "--tags" else r"refs/heads/(.+)$"
     refs = [re.search(rx, l).group(1) for l in lines if re.search(rx, l)]
-    return sorted(refs, key=parse_version, reverse=True) if option == "--tags" else refs
+    return sorted(refs, key=packaging.version.parse, reverse=True) if option == "--tags" else refs
   host = "github" if "github.com" in url else "gitlab" if "gitlab.com" in url else None
   if not host:
     raise ValueError("Obsługiwane tylko GitHub/GitLab")
@@ -371,7 +375,7 @@ def GitGetRef(url: str, option: Literal["--heads", "--tags", "--ref"] = "--ref",
   data = subprocess.run(["curl", "-s", api + endpoint], capture_output=True, text=True).stdout
   out = json.loads(data)
   names = [x["name"] for x in out]
-  return sorted(names, key=parse_version, reverse=True) if option == "--tags" else names
+  return sorted(names, key=packaging.version.parse, reverse=True) if option == "--tags" else names
 
 def AssignName(name:str|bool|None, flag:str|bool|None, msg:str):
   if type(flag) == str:

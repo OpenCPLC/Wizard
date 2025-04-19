@@ -94,7 +94,7 @@ class flag():
 exit_flag = False
 
 if args.version:
-  # 0.0.1: Launch fix
+  # 0.0.1: Check program versions with warnings, launch fix, Makefile cleanup
   # 0.0.0: Beta init
   print(f"OpenCPLC Wizard {Color.BLUE}{VER}{Color.END}")
   print(utils.ColorUrl("https://github.com/OpenCPLC/Wizard"))
@@ -154,14 +154,15 @@ args.name, args.reload = utils.AssignName(args.name, args.reload, flag.r)
 
 #------------------------------------------------------------------------------ Install
 
-utils.InstallMissingAddPath("Git", "git", print_version=False)
-utils.InstallMissingAddPath("ArmGCC", "arm-none-eabi-gcc", "ARMGCC", print_version=False)
-utils.InstallMissingAddPath("OpenOCD", "openocd", print_version=False)
-utils.InstallMissingAddPath("Make", "make", print_version=False)
+utils.InstallMissingAddPath("Git", "git", None, args.yes, "2.47.1")
+utils.InstallMissingAddPath("ArmGCC", "arm-none-eabi-gcc", "ARMGCC", args.yes, "14.2.1")
+utils.InstallMissingAddPath("OpenOCD", "openocd", None, args.yes, "0.12.0")
+utils.InstallMissingAddPath("Make", "make", None, args.yes, "4.4.1")
 
 if utils.RESET_CONSOLE:
   print(f"{Ico.WRN} Zresetuj konsolę systemową po zakończeniu pracy {Color.YELLOW}wizard.exe{Color.END}")
   print(f"{Ico.WRN} Spowoduje to załadowanie nowo dodanych ścieżek systemowych")
+  sys.exit(0)
 
 #------------------------------------------------------------------------------ Load
 
@@ -171,7 +172,7 @@ PATH["fw"] = PATH["framework"] + "/" + CFG["framework-version"]
 PATH["samples"] = PATH["fw"] + "/res/samples"
 PRO = utils.GetProjectList(PATH["projects"])
 SAM = utils.GetProjectList(PATH["samples"])
-utils.VersionCheck(CFG["framework-version"], wizard_config["versions"], f"{Ico.RUN} Sprawdź listę dostępnych wersji za pomocą flagi {flag.fl}")
+utils.FrameworkVersionCheck(CFG["framework-version"], wizard_config["versions"], f"{Ico.RUN} Sprawdź listę dostępnych wersji za pomocą flagi {flag.fl}")
 utils.GitCloneMissing(url_framework, PATH["fw"], CFG["framework-version"], args.yes)
 
 make_info = None
@@ -272,7 +273,7 @@ else:
   CFG["opt-level"] = info["PRO_OPT_LEVEL"]
   CFG["log-level"] = info["LOG_LEVEL"]
   CFG["freq"] = info["SYS_CLOCK_FREQ"]
-  utils.VersionCheck(CFG["project-version"], wizard_config["versions"],
+  utils.FrameworkVersionCheck(CFG["project-version"], wizard_config["versions"],
     f"{Ico.ERR} Definicja {Color.BLUE}PRO_VERSION{Color.END} z pliku {Color.ORANGE}main.h{Color.END} jest nie poprawna"
   )
   fw = PATH["framework"] + "/" + CFG["project-version"]
