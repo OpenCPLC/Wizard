@@ -101,7 +101,8 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - **`name`**: Nazwa projektu. Parametr domyślny przekazywany jako pierwszy. Będzie również stanowić ścieżkę do projektu: `${projects}/name`, a końcowe pliki wsadowe _(`.bin`, `.hex`, `.elf`)_ będą z nią ściśle skorelowane.
 - `-s --sample`: Wczytuje przykład demonstracyjny o wskazanej nazwie. 
 - `-r --reload`: Pobiera nazwę projektu oraz określa, czy jest to przykład, na podstawie wcześniej wygenerowanego pliku `makefile`, a następnie generuje pliki projektowe na nowo. Wówczas nie jest wymagane podawania nazwy **`name`**
-- `-f --framework`: Wersja framework'a. Jeśli nie zostanie podana, zostanie odczytana z pola `version` w pliku konfiguracyjnym `wizard.json`. Format: `<major>.<minor>.<patch>` lub `latest`, `develop`, `main`. W tej wersji będą tworzone nowe projekty oraz ładowane przykłady.
+- `-f --framework`: Wersja framework'a. Jeśli nie zostanie podana, zostanie odczytana z pola `version` w pliku konfiguracyjnym `wizard.json`. Format: `<major>.
+- `-fl --framework_list`: Wyświetla wszystkie dostępne wersje frameworka OpenCPLC.
 - `-b --board`: Model sterownika PLC dla nowego projektu. Oficjalnie wspierana konstrukcja `Uno`, `DIO`, `AIO`, `Eco`, `None` dla pracy z czystym mikrokontrolerem lub inna nazwa własna.
 - `-c --chip`: Wykorzystywany mikrokontroler: `STM32G081`, `STM32G0C1` w nowym projekcie. Dla oficjalnie wspieranych konstrukcji zostanie dobrany automatycznie, więc lepiej go nie podawać. Wybór wpływa na dostępną ilość pamięci FLASH[kB] i RAM[kB] na płytce oraz na dodawane pliki nagłówkowe.
 - `-m --user_memory`: Ilość zarezerwowanej pamięci FLASH[kB] na konfigurację i EEPROM w aplikacji. Powoduje zmniejszenie dostępnej pamięci na program w pliku linkera `flash.ld`.
@@ -109,8 +110,7 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-l --list`: Wyświetla listę istniejących projektów lub przykładów, gdy aktywna jest flaga `-s --sample`.
 - `-i --info`: Zwraca podstawowe informacje o wskazanym lub aktywnym projekcie.  
 - `-u --update`: Sprawdza dostępność aktualizacji i aktualizuje program 🪄Wizard.  
-- `-v --version`: Wyświetla wersję programu 🔮Wizard oraz link do repozytorium. Wersja programu jest taka sama jak najnowsza wersja frameworka **OpenCPLC**.  
-- `-vl --version_list`: Wyświetla wszystkie dostępne wersje frameworka.
+- `-v --version`: Wyświetla wersję programu 🔮Wizard oraz link do repozytorium.
 
 ### 📟 Console
 
