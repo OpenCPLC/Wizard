@@ -94,7 +94,7 @@ class flag():
 exit_flag = False
 
 if args.version:
-  # 0.0.1: Check program versions with warnings, launch fix, Makefile cleanup
+  # 0.0.1: Update Wizard, Check program versions with warnings, Launch & makefile files fix, 
   # 0.0.0: Beta init
   print(f"OpenCPLC Wizard {Color.BLUE}{VER}{Color.END}")
   print(utils.ColorUrl("https://github.com/OpenCPLC/Wizard"))
