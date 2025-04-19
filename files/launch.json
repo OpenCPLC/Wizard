@@ -15,7 +15,7 @@
     {
       "name": "Debug",
       "cwd": "${workspaceRoot}",
-      "executable": "${BUILD_PATH}/${NAME}.elf",
+      "executable": "${BUILD_PATH}/${TARGET}.elf",
       "request": "launch",
       "type": "cortex-debug",
       "servertype": "openocd",

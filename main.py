@@ -63,8 +63,8 @@ parser.add_argument("name", type=str, nargs="?", help="Nazwa projektu", default=
 parser.add_argument("-n", "--new", type=str, nargs="?", help="Nowy projekt", const=True)
 parser.add_argument("-s", "--sample", type=str, nargs="?", help="Przykład demonstracyjny o wskazanej nazwie", const=True)
 parser.add_argument("-r", "--reload", action="store_true", help="Przeładowanie aktywnego projektu. Nie wymaga podawania nazwy {name}", default=False)
-parser.add_argument("-f", "--url_framework", type=str, nargs="?", help=f"Wersja url_framework'a OpenCPLC, format: <major>.<minor>.<patch> lub (latest, develop, main)")
-parser.add_argument("-fl", "--url_framework_list", action="store_true", help="Wszystkie dostępne wersje url_framework'a OpenCPLC", default=False)
+parser.add_argument("-f", "--framework", type=str, nargs="?", help=f"Wersja framework'a OpenCPLC, format: <major>.<minor>.<patch> lub (latest, develop, main)")
+parser.add_argument("-fl", "--framework_list", action="store_true", help="Wszystkie dostępne wersje framework'a OpenCPLC", default=False)
 parser.add_argument("-b", "--board", type=str, nargs="?", help="Model sterownika PLC (Uno, DIO, AIO, Eco, None, ...)")
 parser.add_argument("-c", "--chip", type=str, nargs="?", help="Wykorzystywany mikrokontroler (STM32G081, STM32G0C1). Wybór wpływa na dostępną ilość pamięci FLASH[kB] i RAM[kB] na płytce")
 parser.add_argument("-m", "--user_memory", type=int, nargs="?", help="Ilość zarezerwowanej pamięci FLASH[kB] na konfigurację i EEPROM w aplikacji", default=0)
@@ -82,8 +82,8 @@ class flag():
   n = f"{Color.YELLOW}-n{Color.END} {Color.GREY}--new{Color.END}"
   r = f"{Color.YELLOW}-r{Color.END} {Color.GREY}--reload{Color.END}"
   s = f"{Color.YELLOW}-s{Color.END} {Color.GREY}--sample{Color.END}"
-  f = f"{Color.YELLOW}-f{Color.END} {Color.GREY}--url_framework{Color.END}"
-  fl = f"{Color.YELLOW}-fl{Color.END} {Color.GREY}--url_framework_list{Color.END}"
+  f = f"{Color.YELLOW}-f{Color.END} {Color.GREY}--framework{Color.END}"
+  fl = f"{Color.YELLOW}-fl{Color.END} {Color.GREY}--framework_list{Color.END}"
   b = f"{Color.YELLOW}-b{Color.END} {Color.GREY}--board{Color.END}"
   c = f"{Color.YELLOW}-c{Color.END} {Color.GREY}--chip{Color.END}"
   m = f"{Color.YELLOW}-m{Color.END} {Color.GREY}--user-memory{Color.END}"
@@ -99,7 +99,7 @@ if args.version:
   print(utils.ColorUrl("https://github.com/OpenCPLC/Wizard"))
   exit_flag = True
 
-if args.url_framework_list:
+if args.framework_list:
   msg = f"Framework Versions: "
   latest = f" {Color.GREY}(latest){Color.END}"
   color = Color.BLUE
@@ -164,14 +164,14 @@ if utils.RESET_CONSOLE:
 
 #------------------------------------------------------------------------------ Load
 
-CFG = { "url_framework-version": args.url_framework or wizard_config["version"] }
+CFG = { "framework-version": args.framework or wizard_config["version"] }
 PATH = wizard_config["paths"]
-PATH["fw"] = PATH["url_framework"] + "/" + CFG["url_framework-version"]
+PATH["fw"] = PATH["framework"] + "/" + CFG["framework-version"]
 PATH["samples"] = PATH["fw"] + "/res/samples"
 PRO = utils.GetProjectList(PATH["projects"])
 SAM = utils.GetProjectList(PATH["samples"])
-utils.VersionCheck(CFG["url_framework-version"], wizard_config["versions"], f"{Ico.RUN} Sprawdź listę dostępnych wersji za pomocą flagi {flag.fl}")
-utils.GitCloneMissing(url_framework, PATH["fw"], CFG["url_framework-version"], args.yes)
+utils.VersionCheck(CFG["framework-version"], wizard_config["versions"], f"{Ico.RUN} Sprawdź listę dostępnych wersji za pomocą flagi {flag.fl}")
+utils.GitCloneMissing(url_framework, PATH["fw"], CFG["framework-version"], args.yes)
 
 make_info = None
 if xn.FILE.Exists("makefile"):
@@ -239,13 +239,13 @@ if args.new:
   elif CFG["board"] in ["uno", "dio", "aio"]: CFG["chip"] = "STM32G0C1"
   elif CFG["board"] in ["eco"]: CFG["chip"] = "STM32G081"
   else: CFG["chip"] = wizard_config["default"]["chip"]
-  CFG["project-version"] = args.url_framework or wizard_config["version"]
+  CFG["project-version"] = args.framework or wizard_config["version"]
   if args.user_memory: CFG["user-memory"] = args.user_memory
   elif CFG["board"] in ["uno", "dio", "aio"]: CFG["user-memory"] = 20
   elif CFG["board"] in ["eco"]: CFG["user-memory"] = 12
   else: CFG["user-memory"] = wizard_config["default"]["user-memory"]
   CFG["opt-level"] = args.opt_level or wizard_config["default"]["opt-level"]
-  CFG["log-level"] = "LOG_LEVEL_INFO"
+  CFG["log-level"] = "LOG_LEVEL_INF"
   CFG["freq"] = 59904000 if CFG["board"] in ["uno", "dio", "aio"] else 64000000
 else:
   if args.sample:
@@ -274,13 +274,13 @@ else:
   utils.VersionCheck(CFG["project-version"], wizard_config["versions"],
     f"{Ico.ERR} Definicja {Color.BLUE}PRO_VERSION{Color.END} z pliku {Color.ORANGE}main.h{Color.END} jest nie poprawna"
   )
-  fw = PATH["url_framework"] + "/" + CFG["project-version"]
+  fw = PATH["framework"] + "/" + CFG["project-version"]
   if args.sample:
-    CFG["url_framework-version"] = CFG["project-version"]
+    CFG["framework-version"] = CFG["project-version"]
     PATH["pro"] = PATH["fw"] + "/res/samples/" + CFG["name"]
   elif not utils.GitCloneMissing(url_framework, fw, CFG["project-version"], args.yes, False):
     mag = f"Projekt {Color.MAGENTA}{CFG["name"]}{Color.END} jest w innej wersji {Color.GREY}({CFG['project-version']}){Color.END} "
-    mag += f"niż url_framework {Color.GREY}({CFG['url_framework-version']}){Color.END}"
+    mag += f"niż framework {Color.GREY}({CFG['framework-version']}){Color.END}"
     print(f"{Ico.WRN} {mag}")
     print(f"{Ico.WRN} Może to uniemożliwić kompilację lub powodować niepoprawną pracę programu")
   msg = f"jest ignrowana podczas ładowania istniejącgo {noun2}"
@@ -305,15 +305,19 @@ CFG["ram"] = { "STM32G081": 36, "STM32G0C1": 144 }[CFG["chip"]]
 
 #------------------------------------------------------------------------------
 
+path = xn.LocalPath(PATH["pro"])
+path = xn.ReplaceEnd(path, CFG["name"], "")
+msg = f"{Color.GREY}{path}{Color.TEAL}{CFG["name"]}{Color.END}"
+
 if args.info:
   sample_msg = f" {Color.RED}(sample){Color.END}" if args.sample else ""
   path = xn.LocalPath(PATH["pro"])
   path = xn.ReplaceEnd(path, CFG["name"], "")
-  print(f"{Ico.INF} Project: {Color.GREY}{path}{Color.TEAL}{CFG["name"]}{Color.END}{sample_msg}")
+  print(f"{Ico.INF} Project: {msg}{sample_msg}")
   print(f"{Ico.GAP} Board {flag.b}: {Color.BLUE}{CFG["board"]}{Color.END}")
   print(f"{Ico.GAP} Chip {flag.c}: {Color.ORANGE}{CFG["chip"]}{Color.END}")
   print(f"{Ico.GAP} Project version: {Color.MAGENTA}{CFG["project-version"]}{Color.END}")
-  print(f"{Ico.GAP} Framework version: {Color.MAGENTA}{CFG["url_framework-version"]}{Color.END}")
+  print(f"{Ico.GAP} Framework version: {Color.MAGENTA}{CFG["framework-version"]}{Color.END}")
   print(f"{Ico.GAP} User memory {flag.m}: {Color.CYAN}{CFG["user-memory"]}{Color.END}kB")
   print(f"{Ico.GAP} Optimization level {flag.o}: {Color.ORANGE}{CFG["opt-level"]}{Color.END}")
   print(f"{Ico.GAP} Log level: {Color.BLUE}{xn.ReplaceStart(CFG["log-level"], "LOG_LEVEL_", "")}{Color.END}")
@@ -323,9 +327,10 @@ if args.info:
 
 #------------------------------------------------------------------------------
 
-print(f"{Ico.INF} {noun1} {Color.TEAL}{CFG["name"]}{Color.END} na wersji url_framework'a {Color.BLUE}{CFG["url_framework-version"]}{Color.END}")
+print(f"{Ico.INF} {noun1} {msg} w wersji {Color.BLUE}{CFG["framework-version"]}{Color.END}")
 
 xn.DIR.Create(PATH["pro"])
+
 if not xn.FILE.Exists(PATH["pro"] + "/main.c"): # Utworzenie pliku `main.c`, jeśli nie istnieje
   main_c = sf.main_c
   include = "opencplc.h"
@@ -334,7 +339,8 @@ if not xn.FILE.Exists(PATH["pro"] + "/main.c"): # Utworzenie pliku `main.c`, je�
   utils.CreateFile("main.c", main_c, PATH["pro"], {
     "${FAMILY}": CFG["family"],
     "${INCLUDE}": include
-  }, color=Color.CYAN)
+  }, color=Color.BLUE)
+
 if not xn.FILE.Exists(PATH["pro"] + "/main.h"): # Utworzenie pliku `main.h`, jeśli nie istnieje
   utils.CreateFile("main.h", sf.main_h, PATH["pro"], {
     "${NAME}": CFG["name"],
@@ -454,7 +460,7 @@ utils.CreateFile("c_cpp_properties.json", sf.properties_json, ".vscode", {
 
 drop = xn.FILE.Remove(".vscode/launch.json")
 utils.CreateFile("launch.json", sf.launch_json, ".vscode", {
-  "${NAME}": CFG["name"],
+  "${TARGET}": f"{"sample-" if args.sample else ""}{CFG["name"].replace("/", "-")}",
   "${FRAMEWORK_PATH}": PATH["fw"],
   "${PROJECT_PATH}": PATH["pro"],
   "${BUILD_PATH}": PATH["build"],
