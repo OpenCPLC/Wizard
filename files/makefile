@@ -103,11 +103,12 @@ clean:
 	@find $(BUILD) -type f -name '$(TARGET).*' -exec rm -f {} +
 #	@cmd /c "del /q $(BUILD)\\$(TARGET).*
 
-clr: clean
-
 clean_all:
 	@if [ -d "$(BUILD)" ]; then rm -rf "$(BUILD)"; fi
 #	@if exist "$(BUILD)" (cmd /c "rmdir /s /q $(BUILD)")
+
+clr: clean
+clr_all: clean_all
 
 earse:
 	$(OPENOCD) -c "program $(FW)/res/earse.hex verify reset exit"
@@ -115,7 +116,7 @@ earse:
 earse_real:
 	$(OPENOCD) -c "init; halt; stm32g0x mass_erase 0; reset; exit"
 
-.PHONY: all build flash run clean clr clean_all earse earse_real
+.PHONY: all build flash run clean clean_all clr clr_all earse earse_real
 
 -include $(wildcard $(BUILD)/$(TARGET).d)
 -include $(wildcard $(BUILD)/$(FW)/*.d)
