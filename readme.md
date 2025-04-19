@@ -112,6 +112,9 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-u --update`: Sprawdza dostępność aktualizacji i aktualizuje program 🪄Wizard.  
 - `-v --version`: Wyświetla wersję programu 🔮Wizard oraz link do repozytorium.
 
+🗑️Usuwanie i 💾kopiowanie projektów odbywa się bezpośrednio na poziomie systemu operacyjnego.
+Każdy projekt przechowuje wszystkie niezbędne informacje o sobie, a jego obecność jest automatycznie wykrywana podczas uruchamiania programu.
+
 ### 📟 Console
 
 Programy 🧙🏼‍♂️Wizard oraz ✨Make są programami uruchamianymi z konsoli CMD. Stanowią niezbędnik do pracy z OpenCPLC.
