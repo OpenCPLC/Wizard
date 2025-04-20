@@ -2,6 +2,7 @@
 #include "sys.h"
 #include "vrts.h"
 #include "dbg.h"
+#include "main.h"
 
 //------------------------------------------------------------------------------------------------- dbg
 
@@ -41,9 +42,9 @@ int main(void)
   system_clock_init(); // Konfiguracja systemowego sygnału zegarowego
   systick_init(10); // Uruchomienie zegara systemowego z dokładnością do 10ms
   RTC_Init(); // Włączenie zegara czasu rzeczywistego (RTC)
-  DBG_Init(&dbg_uart); // Inicjalizacja debuger'a (bash + dbg + log)
+  DBG_Init(&dbg_uart); // Inicjalizacja debuger'a (logs + bash)
   DBG_Enter();
-  LOG_Info("Hello ${FAMILY} template project"); // Wyświetl wiadomość startową
+  LOG_Init("Hello ${FAMILY} template project", PRO_VERSION);
   GPIO_Init(&led); // Inicjalizacja diody LED
   thread(DBG_Loop, stack_dbg); // Dodanie wątku debug'era (logs + bash)
   thread(loop, stack_loop); // Dodanie funkcji loop jako wątek

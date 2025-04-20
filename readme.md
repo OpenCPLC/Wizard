@@ -3,8 +3,8 @@
 **Wizard** jest aplikacją konsolową usprawniającą pracę z **OpenCPLC**, którego zadaniem jest dostosowanie środowiska pracy tak, aby 👨‍💻programista-automatyk mógł skupić się na tworzeniu aplikacji, a nie walce z konfiguracją ekosystemu i kompilacją programu. Pobierz **`wizard.exe`** z 🚀[Releases](https://github.com/OpenCPLC/Wizard/releases) i umieść go w wybranym folderze, który będzie pełnił rolę przestrzeni roboczej _(workspace)_. Następnie otwórz konsolę [CMD](#-console) i wpisz:
 
 ```bash
-./wizard.exe --new <project_name> -b <board>
-./wizard.exe --new blinky -b Uno
+./wizard --new <project_name> -b <board>
+./wizard --new blinky -b Uno
 ```
 
 Wówczas w [lokalizacji z projektami](#️-config) `${projects}` tworzony jest katalog _(lub drzewo katalogów)_ zgodny z przekazaną nazwą `<project_name>`. Powstają w nim dwa pliki: `main.c` i `main.h`, które stanowią minimalny zestaw plików projektu. Nie można ich usuwać ani przenosić do podkatalogów.
@@ -12,8 +12,8 @@ Wówczas w [lokalizacji z projektami](#️-config) `${projects}` tworzony jest k
 Gdy będziemy mieli więcej projektów, będziemy mogli swobodnie przełączać się między nimi.
 
 ```bash
-./wizard.exe <project_name>
-./wizard.exe blinky
+./wizard <project_name>
+./wizard blinky
 ```
 
 Podczas tworzenia nowego projektu lub przełączania się na istniejący, generowane są na nowo wszystkie pliki _(`makefile`, `flash.ld`, ...)_ niezbędne do poprawnego przeprowadzenia procesu kompilacji, czyli przekształcenia całości _(plików projektu i framework'a: `.c`, `.h`, `.s`)_ w pliki wsadowe `.bin`/`.hex`, które można wgrać do sterownika jako działający program.
@@ -28,8 +28,8 @@ W przypadku zmiany wartości konfiguracyjnych `PRO_x` w pliku **`main.h`** lub m
 niezbędne jest ponowne załadowanie projektu. Jeśli projekt jest już aktywny, nie trzeba podawać jego nazwy `-r --reload`:
 
 ```bash
-./wizard.exe <project_name>
-./wizard.exe -r
+./wizard <project_name>
+./wizard -r
 ```
 
 Tutaj _(upraszczając)_ kończy się zadanie programu `wizard.exe`, a dalsza praca przebiega tak samo jak w typowym projekcie **embedded systems**, czyli przy użyciu [**✨Make**](#-make)
@@ -76,8 +76,8 @@ W pierwszej kolejności **Wizard** zainstaluje **GNU Arm Embedded Toolchain**, *
 Następnie, w razie konieczności, skopiuje framework OpenCPLC z [repozytorium](https://github.com/OpenCPLC/Framework) do folderu `${framework}` podanego w pliku konfiguracyjnym `wizard.json`. Zostanie sklonowana wersja z pliku konfiguracyjnego lub wskazana za pomocą `-f --framework`:
 
 ```bash
-./wizard.exe <project_name> --new -f 1.0.2
-./wizard.exe <project_name> --new -f develop
+./wizard <project_name> --new -f 1.0.2
+./wizard <project_name> --new -f develop
 ```
 
 W przypadku przełączania się na istniejący projekt, flaga ta jest ignorowana, a projekt korzysta z wersji frameworka zapisanej w pliku `main.h` należącym do projektu. Wersja ta jest określona za pomocą definicji `#define` `PRO_VERSION`.

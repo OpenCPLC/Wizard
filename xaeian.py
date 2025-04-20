@@ -425,6 +425,7 @@ class Color():
   YELLOW = "\033[33m"
   MAGENTA = "\033[35m"
   CYAN = "\033[36m"
+  WHITE = "\033[37m"
   GREY = "\033[90m"
   ORANGE = "\033[38;2;206;145;120m"
   TEAL = "\033[38;2;32;178;170m"

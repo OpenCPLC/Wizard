@@ -65,7 +65,7 @@ parser.add_argument("-s", "--sample", type=str, nargs="?", help="Przykład demon
 parser.add_argument("-r", "--reload", action="store_true", help="Przeładowanie aktywnego projektu. Nie wymaga podawania nazwy {name}", default=False)
 parser.add_argument("-f", "--framework", type=str, nargs="?", help=f"Wersja framework'a OpenCPLC, format: <major>.<minor>.<patch> lub (latest, develop, main)")
 parser.add_argument("-fl", "--framework_list", action="store_true", help="Wszystkie dostępne wersje framework'a OpenCPLC", default=False)
-parser.add_argument("-b", "--board", type=str, nargs="?", help="Model sterownika PLC (Uno, DIO, AIO, Eco, None, ...)")
+parser.add_argument("-b", "--board", type=str, nargs="?", help="Model sterownika PLC (Uno, Dio, Aio, Eco, None, ...)")
 parser.add_argument("-c", "--chip", type=str, nargs="?", help="Wykorzystywany mikrokontroler (STM32G081, STM32G0C1). Wybór wpływa na dostępną ilość pamięci FLASH[kB] i RAM[kB] na płytce")
 parser.add_argument("-m", "--user_memory", type=int, nargs="?", help="Ilość zarezerwowanej pamięci FLASH[kB] na konfigurację i EEPROM w aplikacji", default=0)
 parser.add_argument("-o", "--opt-level", type=str, nargs="?", help="Poziom optymalizacji kompilacji (O0, Og, O1)", default="Og")
@@ -160,8 +160,8 @@ utils.InstallMissingAddPath("OpenOCD", "openocd", None, args.yes, "0.12.0")
 utils.InstallMissingAddPath("Make", "make", None, args.yes, "4.4.1")
 
 if utils.RESET_CONSOLE:
-  print(f"{Ico.WRN} Zresetuj konsolę systemową po zakończeniu pracy {Color.YELLOW}wizard.exe{Color.END}")
-  print(f"{Ico.WRN} Spowoduje to załadowanie nowo dodanych ścieżek systemowych")
+  print(f"{Ico.DOC} Zresetuj konsolę systemową po zakończeniu pracy {Color.YELLOW}wizard.exe{Color.END}")
+  print(f"{Ico.DOC} Spowoduje to załadowanie nowo dodanych ścieżek systemowych")
   sys.exit(0)
 
 #------------------------------------------------------------------------------ Load
@@ -183,7 +183,7 @@ if xn.FILE.Exists("makefile"):
 
 #------------------------------------------------------------------------------
 
-if args.list:
+if args.list or args.name.isdigit():
   LIST = SAM if args.sample else PRO
   if not LIST:
     if args.sample: print(f"{Ico.ERR} Nie znaleziono żadnych przykładów demonstracyjnych")
@@ -191,11 +191,19 @@ if args.list:
       print(f"{Ico.WRN} Nie znaleziono żadnych {"przykładów demonstracyjnych" if args.sample else "projektów"}")
       print(f"{Ico.INF} Utwórz nowy projekt za pomocą flagi {flag.n}")
     sys.exit(1)
+  i = 1
   for name, path in LIST.items():
-    path = xn.LocalPath(path)
-    path = xn.ReplaceEnd(path, name, "")
-    print(f"{Color.GREY}{path}{Color.END}{Color.CYAN if args.sample else Color.BLUE}{name}{Color.END}")
-  sys.exit(0)
+    if args.list:
+      path = xn.LocalPath(path)
+      path = xn.ReplaceEnd(path, name, "")
+      nbr = (Color.ORANGE if args.sample else Color.YELLOW) + str(i).ljust(3, " ") + Color.END
+      print(f"{nbr} {Color.GREY}{path}{Color.END}{Color.CYAN if args.sample else Color.BLUE}{name}{Color.END}")
+    else:
+      if int(args.name) == i:
+        args.name = name
+        break
+    i += 1
+  if args.list: sys.exit(0)
 
 #------------------------------------------------------------------------------
 
@@ -309,14 +317,13 @@ CFG["ram"] = { "STM32G081": 36, "STM32G0C1": 144 }[CFG["chip"]]
 
 path = xn.LocalPath(PATH["pro"])
 path = xn.ReplaceEnd(path, CFG["name"], "")
+
 msg = f"{Color.GREY}{path}{Color.TEAL}{CFG["name"]}{Color.END}"
 
 if args.info:
   sample_msg = f" {Color.RED}(sample){Color.END}" if args.sample else ""
-  path = xn.LocalPath(PATH["pro"])
-  path = xn.ReplaceEnd(path, CFG["name"], "")
   print(f"{Ico.INF} Project: {msg}{sample_msg}")
-  print(f"{Ico.GAP} Board {flag.b}: {Color.BLUE}{CFG["board"]}{Color.END}")
+  print(f"{Ico.GAP} Board {flag.b}: {Color.BLUE}{str(CFG["board"]).capitalize()}{Color.END}")
   print(f"{Ico.GAP} Chip {flag.c}: {Color.ORANGE}{CFG["chip"]}{Color.END}")
   print(f"{Ico.GAP} Project version: {Color.MAGENTA}{CFG["project-version"]}{Color.END}")
   print(f"{Ico.GAP} Framework version: {Color.MAGENTA}{CFG["framework-version"]}{Color.END}")
@@ -347,7 +354,7 @@ if not xn.FILE.Exists(PATH["pro"] + "/main.h"): # Utworzenie pliku `main.h`, je�
   utils.CreateFile("main.h", sf.main_h, PATH["pro"], {
     "${NAME}": CFG["name"],
     "${DATE}": datetime.now().strftime("%Y-%m-%d"),
-    "${BOARD}": "NONE" if  CFG["board"] is None else CFG["board"].upper(),
+    "${BOARD}": str(CFG["board"]).upper(),
     "${CHIP}": CFG["chip"].upper(),
     "${PROJECT_VERSION}": CFG["project-version"],            
     "${OPT_LEVEL}": CFG["opt-level"],
