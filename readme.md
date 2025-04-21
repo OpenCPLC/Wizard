@@ -62,13 +62,13 @@ Użycie `erase_real` **_(erase full chip)_** może powodować zawieszenie mikrok
 Podczas pierwszego uruchomienia 🧙🏼‍♂️Wizard'a tworzony jest plik konfiguracyjny **`wizard.json`**. Zawiera on:
 
 - **`version`**: Domyślna wersja oprogramowania. Wymuszana jest jej instlacja. Zastępuje nieokreśloną wersję `-f --framework`.
-- **`paths`**: Lista ścieżek _(względnych)_
-  - **`projects`**: Główny katalog z projektami. Nowe projekty tworzone są w tym miejscu. Można też skopiować projekt ręcznie. Wszystkie projekty są wykrywane automatycznie. Nazwą projektu jest dalsza część tej ścieżki.
-  - **`framework`**: Katalog zawierający wszystkie wersje frameworka OpenCPLC. W jego wnętrzu tworzone są podkatalogi odpowiadające wersjom w formacie `major.minor.patch`, `develop` lub `main`. Każdy z nich zawiera pliki odpowiedniej wersji frameworka. Pobierane będą jedynie niezbędne wersje.
-  - **`build`**: Katalog z zbudowanymi aplikacjami
-- **`default`**: Lista domyślnych wartości _(`chip`, `user-memory`, `opt-level`)_ dla nieprzekazanych parametrów podczas tworzenia nowego projektu 
+- `paths`: Lista ścieżek _(względnych)_
+  - `projects`: Główny katalog z projektami. Nowe projekty tworzone są w tym miejscu. Można też skopiować projekt ręcznie. Wszystkie projekty są wykrywane automatycznie. Nazwą projektu jest dalsza część tej ścieżki.
+  - `framework`: Katalog zawierający wszystkie wersje frameworka OpenCPLC. W jego wnętrzu tworzone są podkatalogi odpowiadające wersjom w formacie `major.minor.patch`, `develop` lub `main`. Każdy z nich zawiera pliki odpowiedniej wersji frameworka. Pobierane będą jedynie niezbędne wersje.
+  - `build`: Katalog z zbudowanymi aplikacjami
+- `default`: Lista domyślnych wartości _(`chip`, `user-memory`, `opt-level`)_ dla nieprzekazanych parametrów podczas tworzenia nowego projektu 
 - **`pwsh`**: Ustawienie tego parametru na `true` wymusza przygotowanie pliku `makefile` w wersji dla powłoki **PowerShell**.  Dla wartości `false` zostanie przygotowana wersja dla powłoki **Bash**.
-- **`available-versions`**: Lista wszystkich dostępnych wersji framework'a. Jej zawartość jest ustawiana automatycznie.
+- `available-versions`: Lista wszystkich dostępnych wersji framework'a. Jej zawartość jest ustawiana automatycznie.
 
 ### 🤔 How works?
 
