@@ -2,8 +2,8 @@
 
 ### 2025-xx-xx: `0.0.2`
 
-- [ ] Usuwanie projektów za pomocą flagi `-d --delete`.
-- [ ] Pobieranie projektu z **GIT**'a lub zdalnego pliku **ZIP** za pomocą flagi `-g --get`.
+- [x] Usuwanie projektów za pomocą flagi `-d --delete`.
+- [x] Pobieranie projektu z **GIT**'a lub zdalnego pliku **ZIP** za pomocą flagi `-g --get`.
   - Jeśli `@name` w pliku `main.h` jest poprawnie zdefiniowane, nie ma potrzeby podawania nazwy projektu.
 - [x] Generowanie pliku `main.c` w przypadku pracy bez sterownika _(`-b --board` ustawione na `None`)_. Na przykład podczas pracy na gołej płytce **Nucleo**.
 - [x] Indeksowanie projektów podczas wyświetlania list _(dla przykładów i projektów demonstracyjnych)_.

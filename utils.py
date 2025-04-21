@@ -305,7 +305,7 @@ def GitCloneRepo(url:str, path:str, ref:str|None=None, drop_iferr:bool=False):
   cmd += [url, path]
   result = subprocess.run(cmd, capture_output=True, text=True)
   if result.returncode:
-    if drop_iferr: xn.DIR.Remove(path)
+    if drop_iferr: xn.DIR.Remove(path, force=True)
     print(f"{Ico.ERR} Próba sklonowania repozytorium {Color.ORANGE}{url}{Color.END} nie powiodła się")
     sys.exit(1)
 
