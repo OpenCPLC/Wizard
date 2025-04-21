@@ -229,6 +229,7 @@ if args.delete:
     print(f"{Ico.ERR} Projekt o nazwie {Color.MAGENTA}{args.name}{Color.END} nie został znaleziony")
     sys.exit(1)
   try:
+    print(PRO[key], PATH["projects"])
     xn.DIR.Remove(PRO[key], force=True)
     xn.DIR.RemoveEmptyFolders(PATH["projects"], force=True)
     print(f"{Ico.OK} Projekt {Color.TEAL}{args.name}{Color.END} został poprawnie usunięty")

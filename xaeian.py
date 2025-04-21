@@ -73,12 +73,14 @@ class DIR():
         full = os.path.join(root, dir)
         if force: DIR._Force(full)
         os.rmdir(full)
-    if force: DIR._Force(full)
+    if force: DIR._Force(path)
     os.rmdir(path)
+    
 
   @staticmethod
-  def RemoveEmptyFolders(path: str, fix: bool | None = None, force: bool = False):
+  def RemoveEmptyFolders(path:str, fix:bool|None=None, force:bool=False):
     path = FixPath(path, fix)
+    if not DIR.Exists(path): return
     for root, dirs, _ in os.walk(path, topdown=False):
       for dir in dirs:
         full = os.path.join(root, dir)
