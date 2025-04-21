@@ -87,8 +87,8 @@ class DIR():
           if force: DIR._Force(full)
           os.rmdir(full)
     if not os.listdir(path):
-      if force: DIR._Force(full)
-      os.rmdir(full)
+      if force: DIR._Force(path)
+      os.rmdir(path)
 
   @staticmethod
   def Move(src:str, dst:str, fix:bool|None=None):

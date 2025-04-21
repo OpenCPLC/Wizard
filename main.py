@@ -232,6 +232,9 @@ if args.delete:
     print(PRO[key], PATH["projects"])
     xn.DIR.Remove(PRO[key], force=True)
     xn.DIR.RemoveEmptyFolders(PATH["projects"], force=True)
+    if make_info and key == make_info["NAME"]:
+      xn.FILE.Remove("makefile")
+      xn.FILE.Remove("flash.ld")
     print(f"{Ico.OK} Projekt {Color.TEAL}{args.name}{Color.END} został poprawnie usunięty")
     sys.exit(0)
   except Exception as e:
