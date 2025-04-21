@@ -296,6 +296,7 @@ def Unzip(data:bytes, path:str, drop_iferr=True):
     xn.DIR.Create(path)
     zipfile.ZipFile(io.BytesIO(data)).extractall(path)
   except zipfile.BadZipFile:
+    if drop_iferr: xn.DIR.Remove(path, force=True)
     print(f"{Ico.ERR} Plik ZIP jest uszkodzony lub nieprawidłowy")
     sys.exit(1)
 
