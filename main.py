@@ -5,7 +5,7 @@ from datetime import datetime
 class Ico(xn.IcoText): pass
 class Color(xn.Color): pass
 
-VER = "0.0.1"
+VER = "0.0.2"
 
 def HandleSigint(signum, frame):
   print(f"{Ico.WRN} Zamykanie aplikacji {Color.GREY}(Ctrl+C){Color.END}...")
@@ -45,16 +45,16 @@ url_framework = "https://github.com/OpenCPLC/Framework"
 url_wizard = "https://github.com/OpenCPLC/Wizard"
 
 versions = utils.GitGetRef(url_framework, "--ref", use_git=True)
-if versions: wizard_config["versions"] = versions
+if versions: wizard_config["available-versions"] = versions
 else:
   print(f"{Ico.WRN} Brak dostępu do internetu lub serwis {Color.BLUE}GitHub{Color.END} nie odpowiada")
   if "versions" not in wizard_config:
     print(f"{Ico.ERR} Pierwsze uruchomienie nie powiedzie się bez dostępu do zasobów zdalnych")
     sys.exit(1)
-  wizard_config["versions"] = wizard_config["versions"]
+  wizard_config["available-versions"] = wizard_config["available-versions"]
 
 xn.JSON.SavePretty("wizard.json", wizard_config)
-wizard_config["version"] = utils.VersionReal(wizard_config["version"], wizard_config["versions"][0])
+wizard_config["version"] = utils.VersionReal(wizard_config["version"], wizard_config["available-versions"][0])
 
 #------------------------------------------------------------------------------
 
@@ -63,25 +63,29 @@ parser.add_argument("name", type=str, nargs="?", help="Nazwa projektu", default=
 parser.add_argument("-n", "--new", type=str, nargs="?", help="Nowy projekt", const=True)
 parser.add_argument("-s", "--sample", type=str, nargs="?", help="Przykład demonstracyjny o wskazanej nazwie", const=True)
 parser.add_argument("-r", "--reload", action="store_true", help="Przeładowanie aktywnego projektu. Nie wymaga podawania nazwy {name}", default=False)
-parser.add_argument("-f", "--framework", type=str, nargs="?", help=f"Wersja framework'a OpenCPLC, format: <major>.<minor>.<patch> lub (latest, develop, main)")
+parser.add_argument("-d", "--delete", type=str, nargs="?", help="Usuwa wybrany projekt", const=True)
+parser.add_argument("-g", "--get", nargs='+', metavar=("URL", "REF"), help="Pobieranie projektu z GIT'a lub zdalnego pliku ZIP", default=[])
+parser.add_argument("-f", "--framework", type=str, help=f"Wersja framework'a OpenCPLC, format: <major>.<minor>.<patch> lub (latest, develop, main)", default="")
 parser.add_argument("-fl", "--framework_list", action="store_true", help="Wszystkie dostępne wersje framework'a OpenCPLC", default=False)
-parser.add_argument("-b", "--board", type=str, nargs="?", help="Model sterownika PLC (Uno, DIO, AIO, Eco, None, ...)")
-parser.add_argument("-c", "--chip", type=str, nargs="?", help="Wykorzystywany mikrokontroler (STM32G081, STM32G0C1). Wybór wpływa na dostępną ilość pamięci FLASH[kB] i RAM[kB] na płytce")
-parser.add_argument("-m", "--user_memory", type=int, nargs="?", help="Ilość zarezerwowanej pamięci FLASH[kB] na konfigurację i EEPROM w aplikacji", default=0)
-parser.add_argument("-o", "--opt-level", type=str, nargs="?", help="Poziom optymalizacji kompilacji (O0, Og, O1)", default="Og")
+parser.add_argument("-b", "--board", type=str, help="Model sterownika PLC (Uno, Dio, Aio, Eco, None, ...)", default="")
+parser.add_argument("-c", "--chip", type=str, help="Wykorzystywany mikrokontroler (STM32G081, STM32G0C1). Wybór wpływa na dostępną ilość pamięci FLASH[kB] i RAM[kB] na płytce", default="")
+parser.add_argument("-m", "--user_memory", type=int, help="Ilość zarezerwowanej pamięci FLASH[kB] na konfigurację i EEPROM w aplikacji", default=0)
+parser.add_argument("-o", "--opt-level", type=str, help="Poziom optymalizacji kompilacji (O0, Og, O1)", default="Og")
 parser.add_argument("-l", "--list", action="store_true", help="Lista istniejących projektów (lub przykładów z flagą -s)", default=False)
 parser.add_argument("-i", "--info", action="store_true", help="Podstawowe informacje o projekcie", default=False)
-parser.add_argument("-u", "--update", type=str, nargs="?", help="Aktualizacja program Wizard (do najnowszej wersji lub wskazanej)", const="latest")
+parser.add_argument("-u", "--update", type=str, help="Aktualizacja program Wizard (do najnowszej wersji lub wskazanej)", default="")
 parser.add_argument("-v", "--version", action="store_true", help="Wersję programu oraz link do repozytorium", default=False)
 parser.add_argument("-y", "--yes", action="store_true", help="Automatycznie potwierdza wszystkie operacje", default=False)
-parser.add_argument("-hl", "--hash_list", nargs="+", type=str, help="[Hash] Lista tagów do za-hash'owania")
+parser.add_argument("-hl", "--hash_list", nargs="+", help="[Hash] Lista tagów do za-hash'owania")
 parser.add_argument("-ht", "--hash_title", type=str, help="[Hash] Tytół dla enum'a hash'y, który zostanie utworzony z listy tagów", default="")
 args = parser.parse_args()
 
 class flag():
   n = f"{Color.YELLOW}-n{Color.END} {Color.GREY}--new{Color.END}"
-  r = f"{Color.YELLOW}-r{Color.END} {Color.GREY}--reload{Color.END}"
   s = f"{Color.YELLOW}-s{Color.END} {Color.GREY}--sample{Color.END}"
+  r = f"{Color.YELLOW}-r{Color.END} {Color.GREY}--reload{Color.END}"
+  d = f"{Color.YELLOW}-d{Color.END} {Color.GREY}--delete{Color.END}"
+  g = f"{Color.YELLOW}-g{Color.END} {Color.GREY}--get{Color.END}"
   f = f"{Color.YELLOW}-f{Color.END} {Color.GREY}--framework{Color.END}"
   fl = f"{Color.YELLOW}-fl{Color.END} {Color.GREY}--framework_list{Color.END}"
   b = f"{Color.YELLOW}-b{Color.END} {Color.GREY}--board{Color.END}"
@@ -94,8 +98,6 @@ class flag():
 exit_flag = False
 
 if args.version:
-  # 0.0.1: Update Wizard, Check program versions with warnings, Launch & makefile files fix
-  # 0.0.0: Beta init
   print(f"OpenCPLC Wizard {Color.BLUE}{VER}{Color.END}")
   print(utils.ColorUrl("https://github.com/OpenCPLC/Wizard"))
   exit_flag = True
@@ -104,7 +106,7 @@ if args.framework_list:
   msg = f"Framework Versions: "
   latest = f" {Color.GREY}(latest){Color.END}"
   color = Color.BLUE
-  for ver in wizard_config["versions"]:
+  for ver in wizard_config["available-versions"]:
     msg += f"{color}{ver}{Color.END}{latest}, "
     color = Color.CYAN
     latest = ""
@@ -138,19 +140,23 @@ if exit_flag: sys.exit(0)
 
 #------------------------------------------------------------------------------
 
-if args.new and args.reload:
-  print(f"{Ico.ERR} Nie można jednocześnie utworzyć nowego projektu {flag.n} i przeładować istniejącego {flag.r}")
-  sys.exit(1)
-if args.reload and args.sample:
-  print(f"{Ico.ERR} Nie można jednocześnie przeładować istniejącego projektu {flag.r} i użyć przykładu demonstracyjnego {flag.s}")
-  sys.exit(1)
-if args.new and args.sample:
-  print(f"{Ico.ERR} Nie można jednocześnie utworzyć nowego projektu {flag.n} i użyć przykładu demonstracyjnego {flag.s}")
+used_flag = [
+  flag.n if args.new else None,
+  flag.s if args.sample else None,
+  flag.r if args.reload else None,
+  flag.d if args.delete else None,
+  flag.g if args.get else None
+]
+used_flag = [uf for uf in used_flag if uf]
+
+if len(used_flag) > 1:
+  print(f"{Ico.ERR} Flagi {', '.join(used_flag)} nie mogą być użyte jednocześnie")
   sys.exit(1)
 
 args.name, args.new = utils.AssignName(args.name, args.new, flag.n)
 args.name, args.sample = utils.AssignName(args.name, args.sample, flag.s)
-args.name, args.reload = utils.AssignName(args.name, args.reload, flag.r)
+args.name, args.reload = utils.AssignName(args.name, args.reload, flag.r) 
+args.name, args.delete = utils.AssignName(args.name, args.delete, flag.r) 
 
 #------------------------------------------------------------------------------ Install
 
@@ -160,20 +166,29 @@ utils.InstallMissingAddPath("OpenOCD", "openocd", None, args.yes, "0.12.0")
 utils.InstallMissingAddPath("Make", "make", None, args.yes, "4.4.1")
 
 if utils.RESET_CONSOLE:
-  print(f"{Ico.WRN} Zresetuj konsolę systemową po zakończeniu pracy {Color.YELLOW}wizard.exe{Color.END}")
-  print(f"{Ico.WRN} Spowoduje to załadowanie nowo dodanych ścieżek systemowych")
+  print(f"{Ico.DOC} Zresetuj konsolę systemową po zakończeniu pracy {Color.YELLOW}wizard.exe{Color.END}")
+  print(f"{Ico.DOC} Spowoduje to załadowanie nowo dodanych ścieżek systemowych")
   sys.exit(0)
 
-#------------------------------------------------------------------------------ Load
+#------------------------------------------------------------------------------
 
 CFG = { "framework-version": args.framework or wizard_config["version"] }
 PATH = wizard_config["paths"]
 PATH["fw"] = PATH["framework"] + "/" + CFG["framework-version"]
 PATH["samples"] = PATH["fw"] + "/res/samples"
-PRO = utils.GetProjectList(PATH["projects"])
-SAM = utils.GetProjectList(PATH["samples"])
-utils.FrameworkVersionCheck(CFG["framework-version"], wizard_config["versions"], f"{Ico.RUN} Sprawdź listę dostępnych wersji za pomocą flagi {flag.fl}")
+utils.FrameworkVersionCheck(CFG["framework-version"], wizard_config["available-versions"], f"{Ico.RUN} Sprawdź listę dostępnych wersji za pomocą flagi {flag.fl}")
 utils.GitCloneMissing(url_framework, PATH["fw"], CFG["framework-version"], args.yes)
+
+if (args.get or args.delete) and args.sample:
+  args.sample = False
+  print(f"{Ico.WRN} Wybór przykładów demonstracyjnych {flag.s} został zignorowany")
+
+if args.get:
+  url = args.get[0]
+  ref = args.get[1] if len(args.get) > 1 else None
+  args.name = utils.ProjectRemote(url, PATH["projects"], ref, args.name)
+
+#------------------------------------------------------------------------------ Load
 
 make_info = None
 if xn.FILE.Exists("makefile"):
@@ -181,9 +196,10 @@ if xn.FILE.Exists("makefile"):
   lines = utils.LinesClear(lines, "#")
   make_info = utils.GetVars(lines, ["NAME", "FW", "PRO"])
 
-#------------------------------------------------------------------------------
+PRO = utils.GetProjectList(PATH["projects"])
+SAM = utils.GetProjectList(PATH["samples"])
 
-if args.list:
+if args.list or args.name.isdigit():
   LIST = SAM if args.sample else PRO
   if not LIST:
     if args.sample: print(f"{Ico.ERR} Nie znaleziono żadnych przykładów demonstracyjnych")
@@ -191,11 +207,40 @@ if args.list:
       print(f"{Ico.WRN} Nie znaleziono żadnych {"przykładów demonstracyjnych" if args.sample else "projektów"}")
       print(f"{Ico.INF} Utwórz nowy projekt za pomocą flagi {flag.n}")
     sys.exit(1)
+  i = 1
   for name, path in LIST.items():
-    path = xn.LocalPath(path)
-    path = xn.ReplaceEnd(path, name, "")
-    print(f"{Color.GREY}{path}{Color.END}{Color.CYAN if args.sample else Color.BLUE}{name}{Color.END}")
-  sys.exit(0)
+    if args.list:
+      path = xn.LocalPath(path)
+      path = xn.ReplaceEnd(path, name, "")
+      nbr = (Color.ORANGE if args.sample else Color.YELLOW) + str(i).ljust(3, " ") + Color.END
+      print(f"{nbr} {Color.GREY}{path}{Color.END}{Color.CYAN if args.sample else Color.BLUE}{name}{Color.END}")
+    else:
+      if int(args.name) == i:
+        args.name = name
+        break
+    i += 1
+  if args.list: sys.exit(0)
+
+#------------------------------------------------------------------------------ Delete
+
+if args.delete:
+  key = next((key for key in PRO if key.lower() == args.name.lower()), None)
+  if key is None:
+    print(f"{Ico.ERR} Projekt o nazwie {Color.MAGENTA}{args.name}{Color.END} nie został znaleziony")
+    sys.exit(1)
+  try:
+    print(PRO[key], PATH["projects"])
+    xn.DIR.Remove(PRO[key], force=True)
+    xn.DIR.RemoveEmptyFolders(PATH["projects"], force=True)
+    if make_info and key == make_info["NAME"]:
+      xn.FILE.Remove("makefile")
+      xn.FILE.Remove("flash.ld")
+    print(f"{Ico.OK} Projekt {Color.TEAL}{args.name}{Color.END} został poprawnie usunięty")
+    sys.exit(0)
+  except Exception as e:
+    print(f"{Ico.ERR} Nie udało się usunąć projektu {Color.MAGENTA}{args.name}{Color.END}")
+    print(f"{Ico.DOC} {e}")
+    sys.exit(1)
 
 #------------------------------------------------------------------------------
 
@@ -273,7 +318,7 @@ else:
   CFG["opt-level"] = info["PRO_OPT_LEVEL"]
   CFG["log-level"] = info["LOG_LEVEL"]
   CFG["freq"] = info["SYS_CLOCK_FREQ"]
-  utils.FrameworkVersionCheck(CFG["project-version"], wizard_config["versions"],
+  utils.FrameworkVersionCheck(CFG["project-version"], wizard_config["available-versions"],
     f"{Ico.ERR} Definicja {Color.BLUE}PRO_VERSION{Color.END} z pliku {Color.ORANGE}main.h{Color.END} jest nie poprawna"
   )
   fw = PATH["framework"] + "/" + CFG["project-version"]
@@ -309,14 +354,13 @@ CFG["ram"] = { "STM32G081": 36, "STM32G0C1": 144 }[CFG["chip"]]
 
 path = xn.LocalPath(PATH["pro"])
 path = xn.ReplaceEnd(path, CFG["name"], "")
+
 msg = f"{Color.GREY}{path}{Color.TEAL}{CFG["name"]}{Color.END}"
 
 if args.info:
   sample_msg = f" {Color.RED}(sample){Color.END}" if args.sample else ""
-  path = xn.LocalPath(PATH["pro"])
-  path = xn.ReplaceEnd(path, CFG["name"], "")
   print(f"{Ico.INF} Project: {msg}{sample_msg}")
-  print(f"{Ico.GAP} Board {flag.b}: {Color.BLUE}{CFG["board"]}{Color.END}")
+  print(f"{Ico.GAP} Board {flag.b}: {Color.BLUE}{str(CFG["board"]).capitalize()}{Color.END}")
   print(f"{Ico.GAP} Chip {flag.c}: {Color.ORANGE}{CFG["chip"]}{Color.END}")
   print(f"{Ico.GAP} Project version: {Color.MAGENTA}{CFG["project-version"]}{Color.END}")
   print(f"{Ico.GAP} Framework version: {Color.MAGENTA}{CFG["framework-version"]}{Color.END}")
@@ -347,7 +391,7 @@ if not xn.FILE.Exists(PATH["pro"] + "/main.h"): # Utworzenie pliku `main.h`, je�
   utils.CreateFile("main.h", sf.main_h, PATH["pro"], {
     "${NAME}": CFG["name"],
     "${DATE}": datetime.now().strftime("%Y-%m-%d"),
-    "${BOARD}": "NONE" if  CFG["board"] is None else CFG["board"].upper(),
+    "${BOARD}": str(CFG["board"]).upper(),
     "${CHIP}": CFG["chip"].upper(),
     "${PROJECT_VERSION}": CFG["project-version"],            
     "${OPT_LEVEL}": CFG["opt-level"],

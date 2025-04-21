@@ -278,32 +278,67 @@ def IsYes(msg:str="Czy zrobić to automatycznie"):
   yes = input().lower()
   return yes == "tak" or yes == "t" or yes == "true" or yes == "yes" or yes == "y"
 
-def Install(name:str, url:str, path:str, yes:bool=False, unpack_zip:bool=True):
-  if not yes and not IsYes():
-    print(f"{Ico.ERR} Zapoznaj się z instrukcją https://github.com/OpenCPLC/Wizard")
-    sys.exit(1)
+def Download(url:str, timeout:float=10) -> bytes:
   try:
-    url = f"{url}/{name}.zip" if unpack_zip else f"{url}/{name}"
-    data = urllib.request.urlopen(url).read()
-    xn.DIR.Create(path + "/")
-    path = xn.FixPath(f"{path}/{name}")
-    if unpack_zip:
-      xn.DIR.Create(path)
-      zipfile.ZipFile(io.BytesIO(data)).extractall(path)
-    else:
-      with open(path, "wb") as f:
-        f.write(data)
-    print(f"{Ico.OK} Instalacja zakończona powodzeniem")
-  except Exception as e:
-    print(f"{Ico.ERR} Błąd podczas instalacji {Color.BLUE}{name}{Color.END}: {e}")
+    response = urllib.request.urlopen(url, timeout=timeout)
+    data = response.read()
+    zipfile.ZipFile(io.BytesIO(data)).extractall(url)
+  except urllib.error.URLError:
+    print(f"{Ico.ERR} Nie udało się połączyć z adresem {Color.GREY}{url}{Color.END}")
+    sys.exit(1)
+  except urllib.error.HTTPError as e:
+    print(f"{Ico.ERR} Serwer zwrócił błąd HTTP {e.code} dla {Color.GREY}{url}{Color.END}")
+    sys.exit(1)
+  return data
+
+def Unzip(data:bytes, path:str, drop_iferr=True):
+  try:
+    xn.DIR.Create(path)
+    zipfile.ZipFile(io.BytesIO(data)).extractall(path)
+  except zipfile.BadZipFile:
+    if drop_iferr: xn.DIR.Remove(path, force=True)
+    print(f"{Ico.ERR} Plik ZIP jest uszkodzony lub nieprawidłowy")
     sys.exit(1)
 
-def GitCloneRepo(url:str, path:str, ref:str|None=None) -> bool:
+def GitCloneRepo(url:str, path:str, ref:str|None=None, drop_iferr:bool=False):
   cmd = ["git", "clone"]
   if ref: cmd += ["--branch", ref]
   cmd += [url, path]
   result = subprocess.run(cmd, capture_output=True, text=True)
-  return result.returncode == 0
+  if result.returncode:
+    if drop_iferr: xn.DIR.Remove(path, force=True)
+    print(f"{Ico.ERR} Próba sklonowania repozytorium {Color.ORANGE}{url}{Color.END} nie powiodła się")
+    sys.exit(1)
+
+def ProjectRemote(url:str, path:str, ref:str|None=None, name:str="") -> str:
+  tmp = ".remote"
+  xn.DIR.Create(tmp)
+  if url.endswith(".zip"):
+    data = Download(url)
+    Unzip(data, tmp, drop_iferr=True)
+  else:
+    GitCloneRepo(url, tmp, ref, True)
+  lines = xn.FILE.LoadLines(f"{tmp}/main.h")
+  if not lines:
+    print(f"{Ico.ERR} Zdalny projekt nie zawiera pliku {Color.BLUE}main.h{Color.END}")
+    sys.exit(1)
+  if not name:
+    name_line = next((line for line in lines if "@name" in line), "")
+    name_line = re.sub(r"\(.*?\)|\{.*?\}|\[.*?\]", "", name_line) # del all between (), {}, []
+    name_line = re.sub(r"[<>:\"|?*]", "", name_line).replace("\\", "/").strip()
+    parts = name_line.split()
+    if not parts:
+      print(f"{Ico.ERR} Nie udało się odczytać nazwy projektu z pliku {Color.BLUE}main.h{Color.END}")
+      print(f"{Ico.INF} Musisz podać nazwę projektu jako argument przy wywołaniu")
+      sys.exit(1)
+    name = parts[-1]
+  path = f"{path}/{name}"
+  if xn.DIR.Exists(path):
+    print(f"{Ico.ERR} Projekt o nazwie {Color.CYAN}{name}{Color.END} już istnieje")
+    sys.exit(1)
+  xn.DIR.Move(tmp, path)
+  print(f"{Ico.OK} Projekt {Color.CYAN}{name}{Color.END} został pobrany z {Color.GREY}{url}{Color.END}")
+  return name
 
 def ProgramVersion(name:str) -> str|None:
   try:
@@ -315,6 +350,23 @@ def ProgramVersion(name:str) -> str|None:
     return None
   except Exception:
     return None
+
+def Install(name:str, url:str, path:str, yes:bool=False, unpack_zip:bool=True):
+  if not yes and not IsYes():
+    print(f"{Ico.ERR} Zapoznaj się z instrukcją https://github.com/OpenCPLC/Wizard")
+    sys.exit(1)
+  try:
+    url = f"{url}/{name}.zip" if unpack_zip else f"{url}/{name}"
+    data = Download(url)
+    xn.DIR.Create(path + "/")
+    path = xn.FixPath(f"{path}/{name}")
+    if unpack_zip: Unzip(data, path)
+    else:
+      with open(path, "wb") as file: file.write(data)
+    print(f"{Ico.OK} Instalacja zakończona powodzeniem")
+  except Exception as e:
+    print(f"{Ico.ERR} Błąd podczas instalacji {Color.BLUE}{name}{Color.END}: {e}")
+    sys.exit(1)
 
 FTP_PATH = "http://sqrt.pl"
 INSTALL_PATH = "C:"
@@ -350,9 +402,7 @@ def GitCloneMissing(url:str, path:str, ref:str, yes:bool=False, required:bool=Tr
       if not required: return False
       print(f"{Ico.ERR} Możesz pobrać go samodzielnie z {ColorUrl(url)}")
       sys.exit(0)
-    if not GitCloneRepo(url, path, ref):
-      print(f"{Ico.ERR} Próba sklonowania repozytorium {Color.ORANGE}{url}{Color.END} nie powiodła się")
-      sys.exit(1)
+    GitCloneRepo(url, path, ref)
     print(f"{Ico.OK} Repozytorium {Color.ORANGE}{url}{Color.END} zostało sklonowane do {Color.GREY}{xn.LocalPath(path)}{Color.END}")
   return True
 
