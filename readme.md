@@ -101,6 +101,8 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - **`name`**: Nazwa projektu. Parametr domyślny przekazywany jako pierwszy. Będzie również stanowić ścieżkę do projektu: `${projects}/name`, a końcowe pliki wsadowe _(`.bin`, `.hex`, `.elf`)_ będą z nią ściśle skorelowane.
 - `-s --sample`: Wczytuje przykład demonstracyjny o wskazanej nazwie. 
 - `-r --reload`: Pobiera nazwę projektu oraz określa, czy jest to przykład, na podstawie wcześniej wygenerowanego pliku `makefile`, a następnie generuje pliki projektowe na nowo. Wówczas nie jest wymagane podawania nazwy **`name`**
+- `-g --get`: Pobiera projekt z serwisu GIT _(**GitHub**, **GitLab**, ...)_ lub zdalnego pliku ZIP i dodaje go jako nowy. Jako drugi argument _(pierwszym jest link)_ można przekazać referencję _(`branch`, `tag`)_. Jeśli nie została określona nazwa projektu **`name`**, zostanie podjęta próba odczytania jej z pola `@name` z pliku `main.h`.
+- `-d --delete`: Usuwa wybrany projekt ze wskazaną nazwą **`name`**.
 - `-f --framework`: Wersja framework'a. Jeśli nie zostanie podana, zostanie odczytana z pola `version` w pliku konfiguracyjnym `wizard.json`. Format: `<major>.
 - `-fl --framework_list`: Wyświetla wszystkie dostępne wersje frameworka OpenCPLC.
 - `-b --board`: Model sterownika PLC dla nowego projektu. Oficjalnie wspierana konstrukcja `Uno`, `DIO`, `AIO`, `Eco`, `None` dla pracy z czystym mikrokontrolerem lub inna nazwa własna.
@@ -112,7 +114,9 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-u --update`: Sprawdza dostępność aktualizacji i aktualizuje program 🪄Wizard.  
 - `-v --version`: Wyświetla wersję programu 🔮Wizard oraz link do repozytorium.
 
-🗑️Usuwanie i 💾kopiowanie projektów odbywa się bezpośrednio na poziomie systemu operacyjnego.
+parser.add_argument("-d", "--delete", type=str, nargs="?", help="Usuwa wybrany projekt", const=True)
+
+🗑️Usuwanie i 💾kopiowanie projektów można oczywiście wykonywać bezpośrednio z poziomu systemu operacyjnego.
 Każdy projekt przechowuje wszystkie niezbędne informacje o sobie, a jego obecność jest automatycznie wykrywana podczas uruchamiania programu.
 
 ### 📟 Console

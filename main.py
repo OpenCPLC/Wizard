@@ -5,7 +5,7 @@ from datetime import datetime
 class Ico(xn.IcoText): pass
 class Color(xn.Color): pass
 
-VER = "0.0.1"
+VER = "0.0.2"
 
 def HandleSigint(signum, frame):
   print(f"{Ico.WRN} Zamykanie aplikacji {Color.GREY}(Ctrl+C){Color.END}...")
@@ -63,25 +63,28 @@ parser.add_argument("name", type=str, nargs="?", help="Nazwa projektu", default=
 parser.add_argument("-n", "--new", type=str, nargs="?", help="Nowy projekt", const=True)
 parser.add_argument("-s", "--sample", type=str, nargs="?", help="Przykład demonstracyjny o wskazanej nazwie", const=True)
 parser.add_argument("-r", "--reload", action="store_true", help="Przeładowanie aktywnego projektu. Nie wymaga podawania nazwy {name}", default=False)
-parser.add_argument("-f", "--framework", type=str, nargs="?", help=f"Wersja framework'a OpenCPLC, format: <major>.<minor>.<patch> lub (latest, develop, main)")
+parser.add_argument("-g", "--get", nargs='+', metavar=("URL", "REF"), help="Pobieranie projektu z GIT'a lub zdalnego pliku ZIP", default=[])
+# parser.add_argument("-d", "--delete", type=str, nargs="?", help="Usuwa wybrany projekt", const=True)
+parser.add_argument("-f", "--framework", type=str, help=f"Wersja framework'a OpenCPLC, format: <major>.<minor>.<patch> lub (latest, develop, main)", default="")
 parser.add_argument("-fl", "--framework_list", action="store_true", help="Wszystkie dostępne wersje framework'a OpenCPLC", default=False)
-parser.add_argument("-b", "--board", type=str, nargs="?", help="Model sterownika PLC (Uno, Dio, Aio, Eco, None, ...)")
-parser.add_argument("-c", "--chip", type=str, nargs="?", help="Wykorzystywany mikrokontroler (STM32G081, STM32G0C1). Wybór wpływa na dostępną ilość pamięci FLASH[kB] i RAM[kB] na płytce")
-parser.add_argument("-m", "--user_memory", type=int, nargs="?", help="Ilość zarezerwowanej pamięci FLASH[kB] na konfigurację i EEPROM w aplikacji", default=0)
-parser.add_argument("-o", "--opt-level", type=str, nargs="?", help="Poziom optymalizacji kompilacji (O0, Og, O1)", default="Og")
+parser.add_argument("-b", "--board", type=str, help="Model sterownika PLC (Uno, Dio, Aio, Eco, None, ...)", default="")
+parser.add_argument("-c", "--chip", type=str, help="Wykorzystywany mikrokontroler (STM32G081, STM32G0C1). Wybór wpływa na dostępną ilość pamięci FLASH[kB] i RAM[kB] na płytce", default="")
+parser.add_argument("-m", "--user_memory", type=int, help="Ilość zarezerwowanej pamięci FLASH[kB] na konfigurację i EEPROM w aplikacji", default=0)
+parser.add_argument("-o", "--opt-level", type=str, help="Poziom optymalizacji kompilacji (O0, Og, O1)", default="Og")
 parser.add_argument("-l", "--list", action="store_true", help="Lista istniejących projektów (lub przykładów z flagą -s)", default=False)
 parser.add_argument("-i", "--info", action="store_true", help="Podstawowe informacje o projekcie", default=False)
-parser.add_argument("-u", "--update", type=str, nargs="?", help="Aktualizacja program Wizard (do najnowszej wersji lub wskazanej)", const="latest")
+parser.add_argument("-u", "--update", type=str, help="Aktualizacja program Wizard (do najnowszej wersji lub wskazanej)", default="")
 parser.add_argument("-v", "--version", action="store_true", help="Wersję programu oraz link do repozytorium", default=False)
 parser.add_argument("-y", "--yes", action="store_true", help="Automatycznie potwierdza wszystkie operacje", default=False)
-parser.add_argument("-hl", "--hash_list", nargs="+", type=str, help="[Hash] Lista tagów do za-hash'owania")
+parser.add_argument("-hl", "--hash_list", nargs="+", help="[Hash] Lista tagów do za-hash'owania")
 parser.add_argument("-ht", "--hash_title", type=str, help="[Hash] Tytół dla enum'a hash'y, który zostanie utworzony z listy tagów", default="")
 args = parser.parse_args()
 
 class flag():
   n = f"{Color.YELLOW}-n{Color.END} {Color.GREY}--new{Color.END}"
-  r = f"{Color.YELLOW}-r{Color.END} {Color.GREY}--reload{Color.END}"
   s = f"{Color.YELLOW}-s{Color.END} {Color.GREY}--sample{Color.END}"
+  r = f"{Color.YELLOW}-r{Color.END} {Color.GREY}--reload{Color.END}"
+  g = f"{Color.YELLOW}-g{Color.END} {Color.GREY}--get{Color.END}"
   f = f"{Color.YELLOW}-f{Color.END} {Color.GREY}--framework{Color.END}"
   fl = f"{Color.YELLOW}-fl{Color.END} {Color.GREY}--framework_list{Color.END}"
   b = f"{Color.YELLOW}-b{Color.END} {Color.GREY}--board{Color.END}"
@@ -94,8 +97,6 @@ class flag():
 exit_flag = False
 
 if args.version:
-  # 0.0.1: Update Wizard, Check program versions with warnings, Launch & makefile files fix
-  # 0.0.0: Beta init
   print(f"OpenCPLC Wizard {Color.BLUE}{VER}{Color.END}")
   print(utils.ColorUrl("https://github.com/OpenCPLC/Wizard"))
   exit_flag = True
@@ -138,19 +139,16 @@ if exit_flag: sys.exit(0)
 
 #------------------------------------------------------------------------------
 
-if args.new and args.reload:
-  print(f"{Ico.ERR} Nie można jednocześnie utworzyć nowego projektu {flag.n} i przeładować istniejącego {flag.r}")
-  sys.exit(1)
-if args.reload and args.sample:
-  print(f"{Ico.ERR} Nie można jednocześnie przeładować istniejącego projektu {flag.r} i użyć przykładu demonstracyjnego {flag.s}")
-  sys.exit(1)
-if args.new and args.sample:
-  print(f"{Ico.ERR} Nie można jednocześnie utworzyć nowego projektu {flag.n} i użyć przykładu demonstracyjnego {flag.s}")
+used = [flag.n if args.new else None, flag.r if args.reload else None, flag.s if args.sample else None, flag.g if args.get else None]
+used = [fg for fg in used if fg]
+
+if len(used) > 1:
+  print(f"{Ico.ERR} Flagi {', '.join(used)} nie mogą być użyte jednocześnie")
   sys.exit(1)
 
 args.name, args.new = utils.AssignName(args.name, args.new, flag.n)
 args.name, args.sample = utils.AssignName(args.name, args.sample, flag.s)
-args.name, args.reload = utils.AssignName(args.name, args.reload, flag.r)
+args.name, args.reload = utils.AssignName(args.name, args.reload, flag.r) 
 
 #------------------------------------------------------------------------------ Install
 
@@ -170,8 +168,6 @@ CFG = { "framework-version": args.framework or wizard_config["version"] }
 PATH = wizard_config["paths"]
 PATH["fw"] = PATH["framework"] + "/" + CFG["framework-version"]
 PATH["samples"] = PATH["fw"] + "/res/samples"
-PRO = utils.GetProjectList(PATH["projects"])
-SAM = utils.GetProjectList(PATH["samples"])
 utils.FrameworkVersionCheck(CFG["framework-version"], wizard_config["versions"], f"{Ico.RUN} Sprawdź listę dostępnych wersji za pomocą flagi {flag.fl}")
 utils.GitCloneMissing(url_framework, PATH["fw"], CFG["framework-version"], args.yes)
 
@@ -180,6 +176,17 @@ if xn.FILE.Exists("makefile"):
   lines = xn.FILE.LoadLines("makefile")
   lines = utils.LinesClear(lines, "#")
   make_info = utils.GetVars(lines, ["NAME", "FW", "PRO"])
+
+if args.get:
+  if args.sample:
+    args.sample = False
+    print(f"{Ico.WRN} Wybór przykładów demonstracyjnych {flag.s} został zignorowany")
+  url = args.get[0]
+  ref = args.get[1] if len(args.get) > 1 else None
+  args.name = utils.ProjectRemote(url, PATH["projects"], ref, args.name)
+
+PRO = utils.GetProjectList(PATH["projects"])
+SAM = utils.GetProjectList(PATH["samples"])
 
 #------------------------------------------------------------------------------
 

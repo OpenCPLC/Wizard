@@ -67,6 +67,46 @@ class DIR():
         os.rmdir(os.path.join(root, dir))
     os.rmdir(path)
 
+  @staticmethod
+  def Move(src:str, dst:str, fix:bool|None=None):
+    src = FixPath(src, fix)
+    dst = FixPath(dst, fix)
+    if os.path.isdir(src):
+      if not os.path.exists(dst):
+        os.makedirs(dst)
+      for root, dirs, files in os.walk(src):
+        rel = os.path.relpath(root, src)
+        dst_dir = os.path.join(dst, rel)
+        os.makedirs(dst_dir, exist_ok=True)
+        for file in files:
+          os.rename(os.path.join(root, file), os.path.join(dst_dir, file))
+      DIR.Remove(src)
+    else:
+      os.rename(src, dst)
+
+  @staticmethod
+  def Copy(src:str, dst:str, fix:bool|None=None):
+    src = FixPath(src, fix)
+    dst = FixPath(dst, fix)
+    if os.path.isdir(src):
+      for root, dirs, files in os.walk(src):
+        rel = os.path.relpath(root, src)
+        dst_dir = os.path.join(dst, rel)
+        os.makedirs(dst_dir, exist_ok=True)
+        for file in files:
+          src_file = os.path.join(root, file)
+          dst_file = os.path.join(dst_dir, file)
+          with open(src_file, "rb") as fsrc:
+            with open(dst_file, "wb") as fdst:
+              fdst.write(fsrc.read())
+    else:
+      dst_dir = os.path.dirname(dst)
+      if not os.path.exists(dst_dir):
+        os.makedirs(dst_dir)
+      with open(src, "rb") as fsrc:
+        with open(dst, "wb") as fdst:
+          fdst.write(fsrc.read())
+
 class FILE:
 
   @staticmethod

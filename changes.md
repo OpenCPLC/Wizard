@@ -2,9 +2,11 @@
 
 ### 2025-xx-xx: `0.0.2`
 
-- [ ] Pobieranie projektu z Git'a lub zdalnego pliku `.zip` za pomocą flagi `-g --git`.
+- [ ] Usuwanie projektów za pomocą flagi `-d --delete`.
+- [ ] Pobieranie projektu z **GIT**'a lub zdalnego pliku **ZIP** za pomocą flagi `-g --get`.
+  - Jeśli `@name` w pliku `main.h` jest poprawnie zdefiniowane, nie ma potrzeby podawania nazwy projektu.
 - [x] Generowanie pliku `main.c` w przypadku pracy bez sterownika _(`-b --board` ustawione na `None`)_. Na przykład podczas pracy na gołej płytce **Nucleo**.
-- [x] Indeksowanie projektów podczas wyświetlania list _(ważne dla przykładów i projektów demonstracyjnych)_.
+- [x] Indeksowanie projektów podczas wyświetlania list _(dla przykładów i projektów demonstracyjnych)_.
   - Teraz podczas ładowania projektów i przykładów demonstracyjnych można odwoływać się do indeksów.
 
 ```bash
@@ -28,4 +30,4 @@
 
 ### 2025-04-18: `0.0.0`
 
-- [x] Pierwsza stabilna wersja alfa, która pozornie wygląda, jakby wszystko działało 😅
+- [x] Pierwsza stabilna wersja alfa, która pozornie wygląda, jakby wszystko działało.
