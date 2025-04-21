@@ -115,8 +115,6 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-u --update`: Sprawdza dostępność aktualizacji i aktualizuje program 🪄Wizard.  
 - `-v --version`: Wyświetla wersję programu 🔮Wizard oraz link do repozytorium.
 
-parser.add_argument("-d", "--delete", type=str, nargs="?", help="Usuwa wybrany projekt", const=True)
-
 🗑️Usuwanie i 💾kopiowanie projektów można oczywiście wykonywać bezpośrednio z poziomu systemu operacyjnego.
 Każdy projekt przechowuje wszystkie niezbędne informacje o sobie, a jego obecność jest automatycznie wykrywana podczas uruchamiania programu.
 
