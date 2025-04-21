@@ -51,7 +51,7 @@ Plik `makefile` udostępnia również kilka innych funkcji. Oto pełna lista:
 - **`make flash`**: Wgrywa plik wsadowy programu do pamięci sterownika PLC _(mikrokontrolera)_
 - **`make run`**: Wykonuje `make build`, a następnie `make flash`
 - **`make clean`** lub `make clr`: Usuwa zbudowane pliki wsadowe dla aktywnego projektu
-- `make clean_all`: Usuwa zbudowane pliki wsadowe dla wszystkich projektów
+- `make clean_all` lub `make clr_all`:: Usuwa zbudowane pliki wsadowe dla wszystkich projektów
 - **`make erase`**: Wgrywa pusty program na sterownik mikrokontrolera
 - `make erase_real`: Całkowicie czyści pamięć mikrokontrolera
 
@@ -67,7 +67,8 @@ Podczas pierwszego uruchomienia 🧙🏼‍♂️Wizard'a tworzony jest plik kon
   - **`framework`**: Katalog zawierający wszystkie wersje frameworka OpenCPLC. W jego wnętrzu tworzone są podkatalogi odpowiadające wersjom w formacie `major.minor.patch`, `develop` lub `main`. Każdy z nich zawiera pliki odpowiedniej wersji frameworka. Pobierane będą jedynie niezbędne wersje.
   - **`build`**: Katalog z zbudowanymi aplikacjami
 - **`default`**: Lista domyślnych wartości _(`chip`, `user-memory`, `opt-level`)_ dla nieprzekazanych parametrów podczas tworzenia nowego projektu 
-- **`pwsh`**: Ustawienie tego parametru wymusza przygotowanie pliku `makefile` w wersji dla PowerShell _(wymagane na systemie Windows Home)_.
+- **`pwsh`**: Ustawienie tego parametru na `true` wymusza przygotowanie pliku `makefile` w wersji dla powłoki **PowerShell**.  Dla wartości `false` zostanie przygotowana wersja dla powłoki **Bash**.
+- **`available-versions`**: Lista wszystkich dostępnych wersji framework'a. Jej zawartość jest ustawiana automatycznie.
 
 ### 🤔 How works?
 

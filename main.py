@@ -45,16 +45,16 @@ url_framework = "https://github.com/OpenCPLC/Framework"
 url_wizard = "https://github.com/OpenCPLC/Wizard"
 
 versions = utils.GitGetRef(url_framework, "--ref", use_git=True)
-if versions: wizard_config["versions"] = versions
+if versions: wizard_config["available-versions"] = versions
 else:
   print(f"{Ico.WRN} Brak dostępu do internetu lub serwis {Color.BLUE}GitHub{Color.END} nie odpowiada")
   if "versions" not in wizard_config:
     print(f"{Ico.ERR} Pierwsze uruchomienie nie powiedzie się bez dostępu do zasobów zdalnych")
     sys.exit(1)
-  wizard_config["versions"] = wizard_config["versions"]
+  wizard_config["available-versions"] = wizard_config["available-versions"]
 
 xn.JSON.SavePretty("wizard.json", wizard_config)
-wizard_config["version"] = utils.VersionReal(wizard_config["version"], wizard_config["versions"][0])
+wizard_config["version"] = utils.VersionReal(wizard_config["version"], wizard_config["available-versions"][0])
 
 #------------------------------------------------------------------------------
 
@@ -106,7 +106,7 @@ if args.framework_list:
   msg = f"Framework Versions: "
   latest = f" {Color.GREY}(latest){Color.END}"
   color = Color.BLUE
-  for ver in wizard_config["versions"]:
+  for ver in wizard_config["available-versions"]:
     msg += f"{color}{ver}{Color.END}{latest}, "
     color = Color.CYAN
     latest = ""
@@ -176,7 +176,7 @@ CFG = { "framework-version": args.framework or wizard_config["version"] }
 PATH = wizard_config["paths"]
 PATH["fw"] = PATH["framework"] + "/" + CFG["framework-version"]
 PATH["samples"] = PATH["fw"] + "/res/samples"
-utils.FrameworkVersionCheck(CFG["framework-version"], wizard_config["versions"], f"{Ico.RUN} Sprawdź listę dostępnych wersji za pomocą flagi {flag.fl}")
+utils.FrameworkVersionCheck(CFG["framework-version"], wizard_config["available-versions"], f"{Ico.RUN} Sprawdź listę dostępnych wersji za pomocą flagi {flag.fl}")
 utils.GitCloneMissing(url_framework, PATH["fw"], CFG["framework-version"], args.yes)
 
 if (args.get or args.delete) and args.sample:
@@ -313,7 +313,7 @@ else:
   CFG["opt-level"] = info["PRO_OPT_LEVEL"]
   CFG["log-level"] = info["LOG_LEVEL"]
   CFG["freq"] = info["SYS_CLOCK_FREQ"]
-  utils.FrameworkVersionCheck(CFG["project-version"], wizard_config["versions"],
+  utils.FrameworkVersionCheck(CFG["project-version"], wizard_config["available-versions"],
     f"{Ico.ERR} Definicja {Color.BLUE}PRO_VERSION{Color.END} z pliku {Color.ORANGE}main.h{Color.END} jest nie poprawna"
   )
   fw = PATH["framework"] + "/" + CFG["project-version"]
