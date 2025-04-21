@@ -230,6 +230,7 @@ if args.delete:
     sys.exit(1)
   try:
     xn.DIR.Remove(PRO[key], force=True)
+    xn.DIR.RemoveEmptyFolders(PATH["projects"], force=True)
     print(f"{Ico.OK} Projekt {Color.TEAL}{args.name}{Color.END} został poprawnie usunięty")
     sys.exit(0)
   except Exception as e:

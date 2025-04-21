@@ -58,21 +58,36 @@ class DIR():
     else: return False
 
   @staticmethod
+  def _Force(path:str):
+    os.chmod(path, stat.S_IWRITE)
+
+  @staticmethod
   def Remove(path:str, fix:bool|None=None, force:bool=False):
-    def force_writable(p):
-      os.chmod(p, stat.S_IWRITE)
     path = FixPath(path, fix)
     for root, dirs, files in os.walk(path, topdown=False):
       for file in files:
         full = os.path.join(root, file)
-        if force: force_writable(full)
+        if force: DIR._Force(full)
         os.remove(full)
       for dir in dirs:
         full = os.path.join(root, dir)
-        if force: force_writable(full)
+        if force: DIR._Force(full)
         os.rmdir(full)
-    if force: force_writable(path)
+    if force: DIR._Force(full)
     os.rmdir(path)
+
+  @staticmethod
+  def RemoveEmptyFolders(path: str, fix: bool | None = None, force: bool = False):
+    path = FixPath(path, fix)
+    for root, dirs, _ in os.walk(path, topdown=False):
+      for dir in dirs:
+        full = os.path.join(root, dir)
+        if not os.listdir(full):
+          if force: DIR._Force(full)
+          os.rmdir(full)
+    if not os.listdir(path):
+      if force: DIR._Force(full)
+      os.rmdir(path)
 
   @staticmethod
   def Move(src:str, dst:str, fix:bool|None=None):
