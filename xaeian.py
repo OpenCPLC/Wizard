@@ -76,7 +76,6 @@ class DIR():
     if force: DIR._Force(path)
     os.rmdir(path)
     
-
   @staticmethod
   def RemoveEmptyFolders(path:str, fix:bool|None=None, force:bool=False):
     path = FixPath(path, fix)
@@ -89,7 +88,7 @@ class DIR():
           os.rmdir(full)
     if not os.listdir(path):
       if force: DIR._Force(full)
-      os.rmdir(path)
+      os.rmdir(full)
 
   @staticmethod
   def Move(src:str, dst:str, fix:bool|None=None):
