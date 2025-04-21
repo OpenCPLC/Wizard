@@ -63,8 +63,8 @@ parser.add_argument("name", type=str, nargs="?", help="Nazwa projektu", default=
 parser.add_argument("-n", "--new", type=str, nargs="?", help="Nowy projekt", const=True)
 parser.add_argument("-s", "--sample", type=str, nargs="?", help="Przykład demonstracyjny o wskazanej nazwie", const=True)
 parser.add_argument("-r", "--reload", action="store_true", help="Przeładowanie aktywnego projektu. Nie wymaga podawania nazwy {name}", default=False)
+parser.add_argument("-d", "--delete", type=str, nargs="?", help="Usuwa wybrany projekt", const=True)
 parser.add_argument("-g", "--get", nargs='+', metavar=("URL", "REF"), help="Pobieranie projektu z GIT'a lub zdalnego pliku ZIP", default=[])
-# parser.add_argument("-d", "--delete", type=str, nargs="?", help="Usuwa wybrany projekt", const=True)
 parser.add_argument("-f", "--framework", type=str, help=f"Wersja framework'a OpenCPLC, format: <major>.<minor>.<patch> lub (latest, develop, main)", default="")
 parser.add_argument("-fl", "--framework_list", action="store_true", help="Wszystkie dostępne wersje framework'a OpenCPLC", default=False)
 parser.add_argument("-b", "--board", type=str, help="Model sterownika PLC (Uno, Dio, Aio, Eco, None, ...)", default="")
@@ -84,6 +84,7 @@ class flag():
   n = f"{Color.YELLOW}-n{Color.END} {Color.GREY}--new{Color.END}"
   s = f"{Color.YELLOW}-s{Color.END} {Color.GREY}--sample{Color.END}"
   r = f"{Color.YELLOW}-r{Color.END} {Color.GREY}--reload{Color.END}"
+  d = f"{Color.YELLOW}-d{Color.END} {Color.GREY}--delete{Color.END}"
   g = f"{Color.YELLOW}-g{Color.END} {Color.GREY}--get{Color.END}"
   f = f"{Color.YELLOW}-f{Color.END} {Color.GREY}--framework{Color.END}"
   fl = f"{Color.YELLOW}-fl{Color.END} {Color.GREY}--framework_list{Color.END}"
@@ -139,16 +140,23 @@ if exit_flag: sys.exit(0)
 
 #------------------------------------------------------------------------------
 
-used = [flag.n if args.new else None, flag.r if args.reload else None, flag.s if args.sample else None, flag.g if args.get else None]
-used = [fg for fg in used if fg]
+used_flag = [
+  flag.n if args.new else None,
+  flag.s if args.sample else None,
+  flag.r if args.reload else None,
+  flag.d if args.delete else None,
+  flag.g if args.get else None
+]
+used_flag = [uf for uf in used_flag if uf]
 
-if len(used) > 1:
-  print(f"{Ico.ERR} Flagi {', '.join(used)} nie mogą być użyte jednocześnie")
+if len(used_flag) > 1:
+  print(f"{Ico.ERR} Flagi {', '.join(used_flag)} nie mogą być użyte jednocześnie")
   sys.exit(1)
 
 args.name, args.new = utils.AssignName(args.name, args.new, flag.n)
 args.name, args.sample = utils.AssignName(args.name, args.sample, flag.s)
 args.name, args.reload = utils.AssignName(args.name, args.reload, flag.r) 
+args.name, args.delete = utils.AssignName(args.name, args.delete, flag.r) 
 
 #------------------------------------------------------------------------------ Install
 
@@ -162,7 +170,7 @@ if utils.RESET_CONSOLE:
   print(f"{Ico.DOC} Spowoduje to załadowanie nowo dodanych ścieżek systemowych")
   sys.exit(0)
 
-#------------------------------------------------------------------------------ Load
+#------------------------------------------------------------------------------
 
 CFG = { "framework-version": args.framework or wizard_config["version"] }
 PATH = wizard_config["paths"]
@@ -171,24 +179,25 @@ PATH["samples"] = PATH["fw"] + "/res/samples"
 utils.FrameworkVersionCheck(CFG["framework-version"], wizard_config["versions"], f"{Ico.RUN} Sprawdź listę dostępnych wersji za pomocą flagi {flag.fl}")
 utils.GitCloneMissing(url_framework, PATH["fw"], CFG["framework-version"], args.yes)
 
+if (args.get or args.delete) and args.sample:
+  args.sample = False
+  print(f"{Ico.WRN} Wybór przykładów demonstracyjnych {flag.s} został zignorowany")
+
+if args.get:
+  url = args.get[0]
+  ref = args.get[1] if len(args.get) > 1 else None
+  args.name = utils.ProjectRemote(url, PATH["projects"], ref, args.name)
+
+#------------------------------------------------------------------------------ Load
+
 make_info = None
 if xn.FILE.Exists("makefile"):
   lines = xn.FILE.LoadLines("makefile")
   lines = utils.LinesClear(lines, "#")
   make_info = utils.GetVars(lines, ["NAME", "FW", "PRO"])
 
-if args.get:
-  if args.sample:
-    args.sample = False
-    print(f"{Ico.WRN} Wybór przykładów demonstracyjnych {flag.s} został zignorowany")
-  url = args.get[0]
-  ref = args.get[1] if len(args.get) > 1 else None
-  args.name = utils.ProjectRemote(url, PATH["projects"], ref, args.name)
-
 PRO = utils.GetProjectList(PATH["projects"])
 SAM = utils.GetProjectList(PATH["samples"])
-
-#------------------------------------------------------------------------------
 
 if args.list or args.name.isdigit():
   LIST = SAM if args.sample else PRO
@@ -211,6 +220,22 @@ if args.list or args.name.isdigit():
         break
     i += 1
   if args.list: sys.exit(0)
+
+#------------------------------------------------------------------------------ Delete
+
+if args.delete:
+  key = next((key for key in PRO if key.lower() == args.name.lower()), None)
+  if key is None:
+    print(f"{Ico.ERR} Projekt o nazwie {Color.MAGENTA}{args.name}{Color.END} nie został znaleziony")
+    sys.exit(1)
+  try:
+    xn.DIR.Remove(PRO[key], force=True)
+    print(f"{Ico.OK} Projekt {Color.TEAL}{args.name}{Color.END} został poprawnie usunięty")
+    sys.exit(0)
+  except Exception as e:
+    print(f"{Ico.ERR} Nie udało się usunąć projektu {Color.MAGENTA}{args.name}{Color.END}")
+    print(f"{Ico.DOC} {e}")
+    sys.exit(1)
 
 #------------------------------------------------------------------------------
 

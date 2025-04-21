@@ -1,4 +1,4 @@
-import os, sys, re, csv, json
+import os, sys, re, csv, json, stat
 from typing import Iterable, Any
 
 #------------------------------------------------------------------------------ Files
@@ -58,13 +58,20 @@ class DIR():
     else: return False
 
   @staticmethod
-  def Remove(path:str, fix:bool|None=None):
+  def Remove(path:str, fix:bool|None=None, force:bool=False):
+    def force_writable(p):
+      os.chmod(p, stat.S_IWRITE)
     path = FixPath(path, fix)
     for root, dirs, files in os.walk(path, topdown=False):
       for file in files:
-        os.remove(os.path.join(root, file))
+        full = os.path.join(root, file)
+        if force: force_writable(full)
+        os.remove(full)
       for dir in dirs:
-        os.rmdir(os.path.join(root, dir))
+        full = os.path.join(root, dir)
+        if force: force_writable(full)
+        os.rmdir(full)
+    if force: force_writable(path)
     os.rmdir(path)
 
   @staticmethod
