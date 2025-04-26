@@ -73,14 +73,13 @@ parser.add_argument("-m", "--user_memory", type=int, help="Ilość zarezerwowane
 parser.add_argument("-o", "--opt-level", type=str, help="Poziom optymalizacji kompilacji (O0, Og, O1)", default="Og")
 parser.add_argument("-l", "--list", action="store_true", help="Lista istniejących projektów (lub przykładów z flagą -s)", default=False)
 parser.add_argument("-i", "--info", action="store_true", help="Podstawowe informacje o projekcie", default=False)
+parser.add_argument("-a", "--assets", type=str, nargs="?", help="Pobiera dodatki (dokumentacja, diagramy)", const="assets")
 parser.add_argument("-u", "--update", type=str, help="Aktualizacja program Wizard (do najnowszej wersji lub wskazanej)", default="")
 parser.add_argument("-v", "--version", action="store_true", help="Wersję programu oraz link do repozytorium", default=False)
 parser.add_argument("-y", "--yes", action="store_true", help="Automatycznie potwierdza wszystkie operacje", default=False)
 parser.add_argument("-hl", "--hash_list", nargs="+", help="[Hash] Lista tagów do za-hash'owania")
 parser.add_argument("-ht", "--hash_title", type=str, help="[Hash] Tytół dla enum'a hash'y, który zostanie utworzony z listy tagów", default="")
 parser.add_argument("-hd", "--hash_define", action="store_true", help="Zamiast enum'ów generuje #define", default=False)
-parser.add_argument("-a", "--assets", type=str, nargs="?", help="Pobiera dodatki (dokumentacja, diagramy)", const="assets")
-
 args = parser.parse_args()
 
 class flag():

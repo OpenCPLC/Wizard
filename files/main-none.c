@@ -25,6 +25,7 @@ GPIO_t led = { // Nucleo LED
 
 void loop(void)
 {
+  GPIO_Init(&led); // Inicjalizacja diody LED
   while(1) {
     GPIO_Tgl(&led); // Zmiana stanu diody
     LOG_Info("Do nothing"); // Wyświetl wiadomość w pętli
@@ -45,7 +46,6 @@ int main(void)
   DBG_Init(&dbg_uart); // Inicjalizacja debuger'a (logs + bash)
   DBG_Enter();
   LOG_Init("Hello ${FAMILY} template project", PRO_VERSION);
-  GPIO_Init(&led); // Inicjalizacja diody LED
   thread(DBG_Loop, stack_dbg); // Dodanie wątku debug'era (logs + bash)
   thread(loop, stack_loop); // Dodanie funkcji loop jako wątek
   vrts_init(); // Włączenie systemy przełączania wątków VRTS
