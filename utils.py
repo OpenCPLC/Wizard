@@ -16,16 +16,23 @@ def HashString(string:str) -> int:
     hash_value = ((hash_value << 5) + hash_value) + ord(char)
   return hash_value & 0xFFFFFFFF
 
-def CCodeEnum(hash_list:list[str], title:str="") -> str:
-  if title: title = "".join(char for char in title.upper() if char.isalpha()) + "_Hash_"
+def CCodeEnum(hash_list:list[str], title:str="", define:bool=False) -> str:
+  
+  if title: title = "".join(char for char in title.upper() if char.isalpha()) + ("_HASH_" if define else "_Hash_")
   else: title = "HASH_"
-  c_code = "\ntypedef enum {\n"
+  c_code = "\n" if define else f"\n{Color.MAGENTA}typedef enum{Color.END} " + "{\n"
   for name in hash_list:
     value = HashString(name.lower())
-    name = name.title()
-    name = ''.join(char for char in name if char.isalpha())
-    c_code += "  " + title + name + " = " + str(value) + ",\n"
-  c_code += "} " + title + "e;\n"
+    if define:
+      name = name.upper()
+      name = re.sub(r'[^a-zA-Z0-9]', '_', name)
+      c_code += f"{Color.MAGENTA}#define {Color.BLUE}{title}{name}{Color.END} {Color.GREEN}{str(value)}{Color.END}\n"
+    else:
+      name = name.title()
+      name = ''.join(char for char in name if char.isalpha())
+      c_code += f"  {Color.CYAN}{title}{name}{Color.END} = {Color.GREEN}{str(value)}{Color.END},\n"
+  if not define:
+    c_code += "} " + f"{Color.TEAL}{title}t{Color.END};\n"
   return c_code
 
 #------------------------------------------------------------------------------
@@ -278,18 +285,18 @@ def IsYes(msg:str="Czy zrobić to automatycznie"):
   yes = input().lower()
   return yes == "tak" or yes == "t" or yes == "true" or yes == "yes" or yes == "y"
 
-def Download(url:str, timeout:float=10) -> bytes:
+def Download(url:str, save_path:str="", timeout:float=10) -> bytes:
   try:
     response = urllib.request.urlopen(url, timeout=timeout)
     data = response.read()
-    zipfile.ZipFile(io.BytesIO(data)).extractall(url)
+    if save_path:
+      xn.FILE.Save(save_path, data)
+    return data
   except urllib.error.URLError:
     print(f"{Ico.ERR} Nie udało się połączyć z adresem {Color.GREY}{url}{Color.END}")
-    sys.exit(1)
   except urllib.error.HTTPError as e:
     print(f"{Ico.ERR} Serwer zwrócił błąd HTTP {e.code} dla {Color.GREY}{url}{Color.END}")
-    sys.exit(1)
-  return data
+  sys.exit(1)
 
 def Unzip(data:bytes, path:str, drop_iferr=True):
   try:

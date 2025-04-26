@@ -111,12 +111,9 @@ clr: clean
 clr_all: clean_all
 
 earse:
-	$(OPENOCD) -c "program $(FW)/res/earse.hex verify reset exit"
+	$(OPENOCD) "init; halt; stm32g0x mass_erase 0; reset halt; exit"
 
-earse_real:
-	$(OPENOCD) -c "init; halt; stm32g0x mass_erase 0; reset; exit"
-
-.PHONY: all build flash run clean clean_all clr clr_all earse earse_real
+.PHONY: all build flash run clean clean_all clr clr_all earse
 
 -include $(wildcard $(BUILD)/$(TARGET).d)
 -include $(wildcard $(BUILD)/$(FW)/*.d)

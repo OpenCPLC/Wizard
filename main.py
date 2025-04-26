@@ -5,7 +5,7 @@ from datetime import datetime
 class Ico(xn.IcoText): pass
 class Color(xn.Color): pass
 
-VER = "0.0.2"
+VER = "0.0.3"
 
 def HandleSigint(signum, frame):
   print(f"{Ico.WRN} Zamykanie aplikacji {Color.GREY}(Ctrl+C){Color.END}...")
@@ -78,6 +78,9 @@ parser.add_argument("-v", "--version", action="store_true", help="Wersję progra
 parser.add_argument("-y", "--yes", action="store_true", help="Automatycznie potwierdza wszystkie operacje", default=False)
 parser.add_argument("-hl", "--hash_list", nargs="+", help="[Hash] Lista tagów do za-hash'owania")
 parser.add_argument("-ht", "--hash_title", type=str, help="[Hash] Tytół dla enum'a hash'y, który zostanie utworzony z listy tagów", default="")
+parser.add_argument("-hd", "--hash_define", action="store_true", help="Zamiast enum'ów generuje #define", default=False)
+parser.add_argument("-a", "--assets", type=str, nargs="?", help="Pobiera dodatki (dokumentacja, diagramy)", const="assets")
+
 args = parser.parse_args()
 
 class flag():
@@ -115,7 +118,7 @@ if args.framework_list:
   exit_flag = True
 
 if args.hash_list:
-  c_code = utils.CCodeEnum(args.hash_list, args.hash_title)
+  c_code = utils.CCodeEnum(args.hash_list, args.hash_title, args.hash_define)
   print(c_code)
   exit_flag = True
 
@@ -134,6 +137,17 @@ if args.update:
     utils.Install("wizard.exe", f"https://github.com/OpenCPLC/Wizard/releases/download/{args.update}", "./", args.yes, False)
   else:
     print(f"{Ico.OK} OpenCPLC Wizard jest już zainstalowany w {'aktualnej' if new else 'określonej'} wersji {Color.BLUE}{VER}{Color.END}")
+  exit_flag = True
+
+if args.assets:
+  xn.DIR.Create(args.assets)
+  # https://www.st.com/resource/en/reference_manual/rm0444-stm32g0x1-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
+  # https://www.st.com/resource/en/datasheet/stm32g081rb.pdf
+  # https://www.st.com/resource/en/datasheet/stm32g0c1re.pdf
+  url = "http://sqrt.pl/opencplc"
+  for file in ["reference-manual-stm32g0x1.pdf", "datasheet-stm32g081rb.pdf", "datasheet-stm32g0c1re.pdf", "pinout-nucleo.pdf", "pinout-opencplc.pdf"]:
+    utils.Download(f"{url}/{file}", f"{args.assets}/{file}")
+  print(f"{Ico.OK} Materiały pomocnicze zostały pobrane i umieszczone w katalogu {Color.ORANGE}{args.assets}{Color.END}")
   exit_flag = True
 
 if exit_flag: sys.exit(0)

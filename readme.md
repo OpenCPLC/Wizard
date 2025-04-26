@@ -52,10 +52,7 @@ Plik `makefile` udostępnia również kilka innych funkcji. Oto pełna lista:
 - **`make run`**: Wykonuje `make build`, a następnie `make flash`
 - **`make clean`** lub `make clr`: Usuwa zbudowane pliki wsadowe dla aktywnego projektu
 - `make clean_all` lub `make clr_all`:: Usuwa zbudowane pliki wsadowe dla wszystkich projektów
-- **`make erase`**: Wgrywa pusty program na sterownik mikrokontrolera
-- `make erase_real`: Całkowicie czyści pamięć mikrokontrolera
-
-Użycie `erase_real` **_(erase full chip)_** może powodować zawieszenie mikrokontrolera. Aby przywrócić jego działanie, należy wgrać dowolny działający program za pomocą instrukcji `make flash` lub `make erase`, a następnie odłączyć zasilanie i ponownie je podłączyć po kilku sekundach.
+- **`make erase`**: Całkowicie czyści pamięć mikrokontrolera _(**erase** full chip)_
 
 ### ⚙️ Config
 
@@ -111,7 +108,8 @@ Oprócz podstawowych flag opisanych powyżej, istnieje jeszcze kilka, które mog
 - `-m --user_memory`: Ilość zarezerwowanej pamięci FLASH[kB] na konfigurację i EEPROM w aplikacji. Powoduje zmniejszenie dostępnej pamięci na program w pliku linkera `flash.ld`.
 - `-o --opt`: Poziom optymalizacji kodu dla kompilacji: `O0`, `Og`, `O1` _(default: `Og`)_. Poziomy optymalizacji `O2`, `O3` są niedozwolone!
 - `-l --list`: Wyświetla listę istniejących projektów lub przykładów, gdy aktywna jest flaga `-s --sample`.
-- `-i --info`: Zwraca podstawowe informacje o wskazanym lub aktywnym projekcie.  
+- `-i --info`: Zwraca podstawowe informacje o wskazanym lub aktywnym projekcie.
+- `-a --assets`: Pobiera materiały pomocnicze przydatne podczas projektowania _(dokumentacja, diagramy)_. Jako wartość można przekazać nazwę folderu, w którym paczka zostanie umieszczona.
 - `-u --update`: Sprawdza dostępność aktualizacji i aktualizuje program 🪄Wizard.  
 - `-v --version`: Wyświetla wersję programu 🔮Wizard oraz link do repozytorium.
 

@@ -10,7 +10,7 @@ UART_t dbg_uart = {
   .reg = USART1,
   .tx_pin = UART1_TX_PC4,
   .rx_pin = UART1_RX_PC5,
-  .dma_channel = DMA_Channel_4,
+  .dma_nbr = DMA_Nbr_4,
   .int_prioryty = INT_Prioryty_Low,
   .UART_115200
 };

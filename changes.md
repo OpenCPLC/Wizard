@@ -1,6 +1,12 @@
 ## 🕒 Changes
 
-### 2025-xx-xx: `0.0.2`
+### 2025-04-26: `0.0.3`
+
+- [x] Pobieranie materiałów pomocniczych _(dokumentacja, diagramy)_ przy użyciu flagi `-a --assets`.
+- [x] Poprawiono błędy w automatycznie generowanym `mian.c` wynikające ze zmian w frameworku.
+- [x] Poprawka w pliku `makefile` _(niedziałająca funkcja `earse`)_.
+
+### 2025-04-21: `0.0.2`
 
 - [x] Usuwanie projektów za pomocą flagi `-d --delete`.
 - [x] Pobieranie projektu z **GIT**'a lub zdalnego pliku **ZIP** za pomocą flagi `-g --get`.
