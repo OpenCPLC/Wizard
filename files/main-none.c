@@ -10,7 +10,7 @@ UART_t dbg_uart = {
   .reg = USART1,
   .tx_pin = UART1_TX_PC4,
   .rx_pin = UART1_RX_PC5,
-  .dma_channel = DMA_Channel_4,
+  .dma_nbr = DMA_Nbr_4,
   .int_prioryty = INT_Prioryty_Low,
   .UART_115200
 };
@@ -25,6 +25,7 @@ GPIO_t led = { // Nucleo LED
 
 void loop(void)
 {
+  GPIO_Init(&led); // Inicjalizacja diody LED
   while(1) {
     GPIO_Tgl(&led); // Zmiana stanu diody
     LOG_Info("Do nothing"); // Wyświetl wiadomość w pętli
@@ -39,13 +40,12 @@ stack(stack_loop, 256); // Stos pamięci dla funkcji loop
 
 int main(void)
 {
-  system_clock_init(); // Konfiguracja systemowego sygnału zegarowego
+  sys_clock_init(); // Konfiguracja systemowego sygnału zegarowego
   systick_init(10); // Uruchomienie zegara systemowego z dokładnością do 10ms
   RTC_Init(); // Włączenie zegara czasu rzeczywistego (RTC)
   DBG_Init(&dbg_uart); // Inicjalizacja debuger'a (logs + bash)
   DBG_Enter();
   LOG_Init("Hello ${FAMILY} template project", PRO_VERSION);
-  GPIO_Init(&led); // Inicjalizacja diody LED
   thread(DBG_Loop, stack_dbg); // Dodanie wątku debug'era (logs + bash)
   thread(loop, stack_loop); // Dodanie funkcji loop jako wątek
   vrts_init(); // Włączenie systemy przełączania wątków VRTS

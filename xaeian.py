@@ -130,6 +130,23 @@ class DIR():
         with open(dst, "wb") as fdst:
           fdst.write(fsrc.read())
 
+  @staticmethod
+  def FileList(path: str, exts: list[str] = [], blacklist: list[str] = [], fix: bool | None = None) -> list[str]:
+    path = FixPath(path, fix)
+    result = []
+    blacklist = [FixPath(path + "/" + b, fix) for b in blacklist]
+    exts = tuple(ext.lower() for ext in exts)
+    for root, dirs, filelist in os.walk(path):
+      root = FixPath(root, fix)
+      if any(root.startswith(b) for b in blacklist):
+        continue
+      for name in filelist:
+        if not exts or name.lower().endswith(exts):
+          full_path = root + "/" + name
+          result.append(full_path)
+
+    return result
+
 class FILE:
 
   @staticmethod
@@ -147,16 +164,17 @@ class FILE:
     return False
 
   @staticmethod
-  def Load(path:str, fix:bool|None=None, onefile_pack:bool|None=None, binary=False) -> str:
+  def Load(path:str, fix:bool|None=None, onefile_pack:bool|None=None, binary:bool=False) -> str|bytes:
     path = FixPath(path, fix, onefile_pack)
-    if not os.path.exists(path): return "" 
+    if not os.path.exists(path): return b"" if binary else ""
+    mode = "rb" if binary else "r"
+    encoding = None if binary else "utf-8"
     try:
-      with open(path, "rb" if binary else "r", encoding="utf-8") as file:
-        return file.read()
-    except Exception as e:
-      print(f"Error loading text file: {e}")
-      return ""
-  
+      with open(path, mode, encoding=encoding) as file: return file.read()
+    except (OSError, TypeError) as e:
+      print(f"Error loading file: {e}")
+      return b"" if binary else ""
+
   @staticmethod
   def LoadLines(path:str, fix:bool|None=None, onefile_pack:bool|None=None) -> list[str]:
     path = FixPath(path, fix, onefile_pack)
@@ -169,13 +187,14 @@ class FILE:
       return []
 
   @staticmethod
-  def Save(path:str, content:str, fix:bool|None=None, binary=False):
+  def Save(path:str, content:str|bytes, fix:bool|None=None):
     path = FixPath(path, fix)
+    mode = "wb" if isinstance(content, bytes) else "w"
+    encoding = None if mode == "wb" else "utf-8"
     try:
-      with open(path, "wb" if binary else "w", encoding="utf-8") as file:
-        file.write(content)
+      with open(path, mode, encoding=encoding) as file: file.write(content)
     except (TypeError, OSError) as e:
-      print(f"Error saving text file: {e}") 
+      print(f"Error saving file: {e}")
 
 class INI:
 
