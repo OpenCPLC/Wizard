@@ -40,7 +40,7 @@ stack(stack_loop, 256); // Stos pamięci dla funkcji loop
 
 int main(void)
 {
-  system_clock_init(); // Konfiguracja systemowego sygnału zegarowego
+  sys_clock_init(); // Konfiguracja systemowego sygnału zegarowego
   systick_init(10); // Uruchomienie zegara systemowego z dokładnością do 10ms
   RTC_Init(); // Włączenie zegara czasu rzeczywistego (RTC)
   DBG_Init(&dbg_uart); // Inicjalizacja debuger'a (logs + bash)

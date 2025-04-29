@@ -145,7 +145,8 @@ if args.assets:
   # https://www.st.com/resource/en/datasheet/stm32g0c1re.pdf
   url = "http://sqrt.pl/opencplc"
   for file in ["reference-manual-stm32g0x1.pdf", "datasheet-stm32g081rb.pdf", "datasheet-stm32g0c1re.pdf", "pinout-nucleo.pdf", "pinout-opencplc.pdf"]:
-    utils.Download(f"{url}/{file}", f"{args.assets}/{file}")
+    if not xn.FILE.Exists(f"{args.assets}/{file}"):
+      utils.Download(f"{url}/{file}", f"{args.assets}/{file}")
   print(f"{Ico.OK} Materiały pomocnicze zostały pobrane i umieszczone w katalogu {Color.ORANGE}{args.assets}{Color.END}")
   exit_flag = True
 
